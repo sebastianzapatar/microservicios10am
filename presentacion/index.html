@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Hospital Microservicios | Presentación</title>
+  <title>Hospital Microservicios con RabbitMQ | Presentación</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
 
   <!-- reveal.js 6.0.2 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reset.min.css">
@@ -126,9 +126,9 @@
   <section class="center-slide">
     <div style="font-size:3.6em">🏥</div>
     <h1>Hospital<br>Microservicios</h1>
-    <p class="subtitle">Arquitectura distribuida para médicos, clientes e historias clínicas</p>
-    <span class="tag">Spring Boot 4 · Eureka · API Gateway · Go · Docker Compose</span>
-    <aside class="notes">Presentar el objetivo: un sistema hospitalario dividido en servicios independientes que se descubren entre sí y toleran fallos.</aside>
+    <p class="subtitle">Comunicación entre historias clínicas y médicos mediante mensajería</p>
+    <span class="tag">Spring Boot 4 · RabbitMQ · Eureka · API Gateway · Docker Compose</span>
+    <aside class="notes">Presentar el objetivo: reemplazar la llamada HTTP directa de OpenFeign por un intercambio request/reply mediante RabbitMQ, sin perder la validación inmediata del médico.</aside>
   </section>
 
   <section>
@@ -145,8 +145,10 @@
         </ul>
       </div>
       <div class="card">
-        <h4>2 · Flujos</h4>
+        <h4>2 · RabbitMQ y flujos</h4>
         <ul>
+          <li>Exchange, routing key, cola y consumidor</li>
+          <li>OpenFeign frente a RabbitMQ</li>
           <li>Crear una historia clínica</li>
           <li>Qué pasa cuando algo se cae</li>
         </ul>
@@ -168,7 +170,7 @@
     <div class="grid-3">
       <div class="card"><div class="num">01</div><h4>Atención clínica</h4><p>Historias clínicas vinculadas a un paciente y validadas contra un médico existente.</p></div>
       <div class="card"><div class="num">02</div><h4>Operación desacoplada</h4><p>Cada dominio evoluciona, se despliega y persiste sus datos sin compartir base de datos.</p></div>
-      <div class="card"><div class="num">03</div><h4>Tolerancia a fallos</h4><p>Los circuit breakers evitan que la caída de un servicio se propague a toda la API.</p></div>
+      <div class="card"><div class="num">03</div><h4>Integración desacoplada</h4><p>RabbitMQ media la validación: Historias no necesita conocer la URL ni una instancia de Médicos.</p></div>
     </div>
   </section>
 
@@ -176,7 +178,7 @@
     <span class="eyebrow">Arquitectura · 2 de 7</span>
     <h2>Vista general: cómo se conecta</h2>
     <svg class="archsvg" viewBox="0 0 1200 520" role="img"
-         aria-label="Arquitectura: el usuario entra por el API Gateway en el puerto 8080; el gateway enruta a doctor-service 8081, clinical-history-service 8082 y client-service 8083, que persisten en PostgreSQL 5432, MongoDB 27017 y MySQL 3306; los cuatro componentes Spring y el servicio Go se registran en Eureka 8761, publicado en el host como 8762.">
+         aria-label="Arquitectura: el usuario entra por el API Gateway; el gateway enruta a los tres servicios; clinical-history-service y doctor-service intercambian solicitudes y respuestas mediante RabbitMQ; cada servicio conserva su propia base de datos y se registra en Eureka.">
       <defs>
         <marker id="ar-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0 L10 5 L0 10 z" fill="#5ee0ff"/></marker>
@@ -184,6 +186,8 @@
           <path d="M0 0 L10 5 L0 10 z" fill="#ffd60a"/></marker>
         <marker id="ar-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0 L10 5 L0 10 z" fill="#7ee787"/></marker>
+        <marker id="ar-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#ff9f43"/></marker>
       </defs>
 
       <!-- frontera de la red de Docker Compose -->
@@ -236,17 +240,18 @@
       <rect x="520" y="207" width="300" height="106" rx="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.32)" stroke-width="2"/>
       <text class="t" x="670" y="241" text-anchor="middle">clinical-history-service</text>
       <text class="p" x="670" y="268" text-anchor="middle">:8082</text>
-      <text class="s" x="670" y="292" text-anchor="middle">Spring Boot · Mongo · OpenFeign</text>
+      <text class="s" x="670" y="292" text-anchor="middle">Spring Boot · Mongo · AMQP</text>
 
       <rect x="520" y="384" width="300" height="106" rx="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.32)" stroke-width="2"/>
       <text class="t" x="670" y="418" text-anchor="middle">client-service</text>
       <text class="p" x="670" y="445" text-anchor="middle">:8083</text>
       <text class="s" x="670" y="469" text-anchor="middle">Go · Gin · GORM</text>
 
-      <!-- llamada interna OpenFeign -->
-      <line x1="670" y1="203" x2="670" y2="142" stroke="#ffd60a" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ar-gold)"/>
-      <text class="e" x="686" y="167">OpenFeign</text>
-      <text class="es" x="686" y="186">GET /api/doctors/{id}</text>
+      <!-- broker entre historias y médicos: request y reply pasan por RabbitMQ -->
+      <line x1="670" y1="207" x2="670" y2="198" stroke="#ff9f43" stroke-width="2.5" marker-end="url(#ar-orange)"/>
+      <rect x="580" y="151" width="180" height="43" rx="12" fill="rgba(255,159,67,.16)" stroke="#ff9f43" stroke-width="2"/>
+      <text class="ts" x="670" y="178" text-anchor="middle">RabbitMQ · :5672</text>
+      <line x1="670" y1="151" x2="670" y2="140" stroke="#ff9f43" stroke-width="2.5" marker-end="url(#ar-orange)"/>
 
       <!-- bases de datos -->
       <line x1="820" y1="83" x2="894" y2="83" stroke="#7ee787" stroke-width="2.5" marker-end="url(#ar-green)"/>
@@ -268,8 +273,9 @@
       <span class="lg-c"><i></i>petición enrutada (lb://)</span>
       <span class="lg-g"><i style="border-top-style:dashed"></i>registro y descubrimiento</span>
       <span class="lg-v"><i></i>persistencia</span>
+      <span style="color:#ff9f43"><i></i>mensajes AMQP</span>
     </div>
-    <p class="note">Al host solo se publican <strong>8080</strong> (API) y <strong>8762</strong> (panel de Eureka). El resto de puertos existe únicamente dentro de la red de Compose.</p>
+    <p class="note">RabbitMQ recibe la solicitud, la conserva en la cola hasta entregarla y devuelve la respuesta correlacionada. El panel de observación está en <strong>localhost:15672</strong>.</p>
   </section>
 
   <section>
@@ -280,12 +286,13 @@
       <tbody>
         <tr><td>api-gateway</td><td>Puerta de entrada, enrutamiento y circuit breaker por ruta</td><td>Spring Cloud Gateway (WebFlux)</td><td>8080</td></tr>
         <tr><td>eureka-server</td><td>Registro y directorio de servicios</td><td>Spring Cloud Netflix Eureka</td><td>8761</td></tr>
-        <tr><td>doctor-service</td><td>Alta y consulta de médicos</td><td>Spring Boot + JPA</td><td>8081</td></tr>
-        <tr><td>clinical-history-service</td><td>Historias clínicas; valida el médico por HTTP</td><td>Spring Boot + MongoDB + OpenFeign</td><td>8082</td></tr>
+        <tr><td>rabbitmq</td><td>Broker: enruta, almacena y entrega mensajes</td><td>RabbitMQ 4 + AMQP</td><td>5672 / 15672</td></tr>
+        <tr><td>doctor-service</td><td>API de médicos y consumidor de validaciones</td><td>Spring Boot + JPA + AMQP</td><td>8081</td></tr>
+        <tr><td>clinical-history-service</td><td>Historias; solicita validación por mensajes</td><td>Spring Boot + MongoDB + AMQP</td><td>8082</td></tr>
         <tr><td>client-service</td><td>Alta y consulta de pacientes</td><td>Go + Gin + GORM</td><td>8083</td></tr>
       </tbody>
     </table>
-    <div class="box"><p>Cinco procesos distintos, <span class="highlight">dos lenguajes</span> y tres motores de datos conviviendo detrás de una sola API.</p></div>
+    <div class="box"><p>Seis procesos de aplicación e infraestructura, <span class="highlight">dos lenguajes</span>, un broker y tres motores de datos conviviendo detrás de una sola API.</p></div>
   </section>
 
   <section>
@@ -351,10 +358,111 @@
       </div>
       <div class="card">
         <h4>Interna: Historias → Médicos</h4>
-        <p>clinical-history-service usa <span class="highlight">OpenFeign</span> con el nombre <span class="endpoint">doctor-service</span>. Antes de persistir consulta <span class="endpoint">GET /api/doctors/{id}</span>.</p>
+        <p>clinical-history-service publica el ID en <span class="endpoint">hospital.doctors</span>. RabbitMQ lo enruta a <span class="endpoint">doctor.validation</span> y entrega la respuesta correlacionada.</p>
       </div>
     </div>
-    <div class="box"><p>Es comunicación HTTP <strong>síncrona</strong>: da validación inmediata, pero crea dependencia temporal entre servicios. Por eso ese enlace lleva circuit breaker y fallback.</p></div>
+    <div class="box"><p>El transporte ahora es <strong>AMQP</strong>, no HTTP. El broker desacopla direcciones e instancias; como esta regla exige validar antes de guardar, se usa request/reply con un timeout de 3 segundos.</p></div>
+  </section>
+
+  <!-- ═══════════════════════════ RABBITMQ ═══════════════════════════ -->
+  <section>
+    <span class="eyebrow">RabbitMQ · 1 de 5</span>
+    <h2>¿Qué hace un broker de mensajes?</h2>
+    <div class="flow">
+      <div class="step">Productor<br>publica</div><div class="arrow">→</div>
+      <div class="step">Exchange<br>decide ruta</div><div class="arrow">→</div>
+      <div class="step">Cola<br>espera</div><div class="arrow">→</div>
+      <div class="step good">Consumidor<br>procesa + ACK</div>
+    </div>
+    <div class="grid-3">
+      <div class="card"><h4>Exchange</h4><p>No guarda mensajes. Lee la <em>routing key</em> y aplica sus bindings para decidir a qué cola enviarlos.</p></div>
+      <div class="card"><h4>Queue</h4><p>Amortigua productor y consumidor. En este proyecto es durable y descarta solicitudes caducadas tras 5 segundos.</p></div>
+      <div class="card"><h4>Consumer + ACK</h4><p><span class="endpoint">@RabbitListener</span> procesa el mensaje. El ACK confirma al broker que puede retirarlo de la cola.</p></div>
+    </div>
+    <div class="box"><p>El productor conoce un <strong>destino lógico</strong>, no la IP, el puerto HTTP ni cuántas instancias consumidoras existen.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">RabbitMQ · 2 de 5</span>
+    <h2>La ruta usada en este proyecto</h2>
+    <pre class="diagram">clinical-history-service
+  │ publica "1" + routing key: doctor.validation.request
+  ▼
+┌──────────────────────────────────────────────────────────┐
+│ Exchange directo: hospital.doctors                      │
+│   binding exacto ───────────────► Queue: doctor.validation│
+└──────────────────────────────────────────────────────────┘
+                                           │ entrega
+                                           ▼
+                               doctor-service @RabbitListener
+                                           │
+                                  responde FOUND / NOT_FOUND</pre>
+    <div class="grid-2">
+      <div class="card"><h4>Direct exchange</h4><p>La routing key debe coincidir exactamente con el binding. Es sencillo y apropiado para un comando con un destino claro.</p></div>
+      <div class="card"><h4>Consumidores competidores</h4><p>Si hay varias instancias de Médicos, RabbitMQ reparte mensajes; cada solicitud la procesa una sola instancia.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">RabbitMQ · 3 de 5</span>
+    <h2>Request/reply: ¿cómo vuelve la respuesta?</h2>
+    <div class="flow">
+      <div class="step">1. Publica ID<br>+ correlationId</div><div class="arrow">→</div>
+      <div class="step">2. Listener<br>consulta PostgreSQL</div><div class="arrow">→</div>
+      <div class="step">3. Responde a<br>reply-to</div><div class="arrow">→</div>
+      <div class="step good">4. Mismo ID<br>desbloquea llamada</div>
+    </div>
+    <pre><code class="language-java" data-trim>Object reply = rabbit.convertSendAndReceive(
+    "hospital.doctors",
+    "doctor.validation.request",
+    doctorId.toString());
+
+@RabbitListener(queues = "doctor.validation")
+public String validate(String id) {
+  return doctors.exists(Long.valueOf(id)) ? "FOUND" : "NOT_FOUND";
+}</code></pre>
+    <p class="note">Spring AMQP administra <span class="endpoint">correlationId</span> y <span class="endpoint">amq.rabbitmq.reply-to</span>. Si no llega respuesta en 3 s, el resultado es UNAVAILABLE y la API responde 503.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">RabbitMQ · 4 de 5</span>
+    <h2>OpenFeign vs RabbitMQ</h2>
+    <table class="table plain">
+      <thead><tr><th>Aspecto</th><th>OpenFeign (antes)</th><th>RabbitMQ (ahora)</th></tr></thead>
+      <tbody>
+        <tr><td>Transporte</td><td>HTTP request/response</td><td>AMQP mediante un broker</td></tr>
+        <tr><td>Destino</td><td>Nombre en Eureka → instancia</td><td>Exchange + routing key → cola</td></tr>
+        <tr><td>Acoplamiento</td><td>Conoce ruta, verbo y DTO HTTP</td><td>Conoce contrato del mensaje y destino lógico</td></tr>
+        <tr><td>Si el consumidor está ocupado</td><td>La conexión espera o falla</td><td>La cola absorbe picos mientras el mensaje sea vigente</td></tr>
+        <tr><td>Escalado</td><td>LoadBalancer elige instancia</td><td>La cola reparte entre consumidores</td></tr>
+        <tr><td>Fallo aquí</td><td>Circuit breaker + fallback</td><td>Reply timeout + TTL + respuesta 503</td></tr>
+        <tr><td>Modelo natural</td><td>Consulta inmediata</td><td>Eventos/comandos asíncronos; también RPC</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <span class="eyebrow">RabbitMQ · 5 de 5</span>
+    <h2>Lo que cambió… y lo que no</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4 class="ok">Sí cambia</h4>
+        <ul>
+          <li>Historias ya no conoce la API HTTP de Médicos.</li>
+          <li>El broker enruta, amortigua picos y reparte consumidores.</li>
+          <li>La integración se observa en el panel de RabbitMQ.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 class="warn">No cambia</h4>
+        <ul>
+          <li>La API pública sigue siendo REST.</li>
+          <li>La historia espera una respuesta antes de guardarse.</li>
+          <li>Si no se puede validar, se rechaza con 503.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="box"><p><span class="highlight">Decisión consciente:</span> es RPC sobre mensajes. Un diseño totalmente asíncrono respondería 202 y completaría después, pero cambiaría el contrato y permitiría consistencia eventual.</p></div>
   </section>
 
   <!-- ════════════════════════════ FLUJOS ════════════════════════════ -->
@@ -367,8 +475,8 @@
       <div class="step">3. Historias<br>recibe</div>
     </div>
     <div class="flow">
-      <div class="step">4. OpenFeign<br>consulta médico</div><div class="arrow">→</div>
-      <div class="step">5. doctor-service<br>valida ID</div><div class="arrow">→</div>
+      <div class="step">4. Publica ID<br>en RabbitMQ</div><div class="arrow">→</div>
+      <div class="step">5. Médicos<br>responde FOUND</div><div class="arrow">→</div>
       <div class="step good">6. MongoDB<br>guarda historia</div>
     </div>
     <pre><code class="language-bash" data-trim>POST /api/histories
@@ -388,8 +496,8 @@
       </div>
       <div class="card">
         <h4>Dentro de Historias</h4>
-        <p>OpenFeign tiene Circuit Breaker y <span class="endpoint">DoctorClientFallback</span>.</p>
-        <p class="warn">Si Médicos no responde, la creación se rechaza con 503 en lugar de registrar una historia sin validar.</p>
+        <p>RabbitTemplate espera como máximo 3 s. La cola elimina solicitudes vencidas a los 5 s.</p>
+        <p class="warn">Si Médicos o el broker no responden, la creación devuelve 503 y no registra una historia sin validar.</p>
       </div>
     </div>
     <pre class="diagram"> ┌────────┐   5 llamadas, ≥50 % fallan   ┌──────┐
@@ -401,7 +509,7 @@
      │         ┌───────────┐                │
      └─────────┤ HALF_OPEN │◄───────────────┘
                └───────────┘</pre>
-    <p class="note">El paso de OPEN a HALF_OPEN es automático: el circuito se recupera aunque no llegue tráfico nuevo.</p>
+    <p class="note">El diagrama CLOSED/OPEN corresponde a las rutas HTTP del Gateway. La integración AMQP usa timeout y TTL; son mecanismos distintos.</p>
   </section>
 
   <section>
@@ -409,17 +517,19 @@
     <h2>Fallo y recuperación, en vivo</h2>
     <div class="flow">
       <div class="step">doctor-service<br>se detiene</div><div class="arrow">→</div>
-      <div class="step bad">circuito OPEN<br>503 inmediato</div><div class="arrow">→</div>
+      <div class="step bad">RPC vence<br>a los 3 s → 503</div><div class="arrow">→</div>
       <div class="step">rutas sanas<br>siguen en 200</div><div class="arrow">→</div>
-      <div class="step good">vuelve el servicio<br>circuito CLOSED</div>
+      <div class="step good">vuelve Médicos<br>consume otra vez</div>
     </div>
     <pre><code class="language-bash" data-trim>docker compose stop doctor-service
-curl http://localhost:8080/api/doctors      # 503 {"message":"doctors service is temporarily unavailable"}
-curl http://localhost:8080/api/clients      # 200 — la caída no se propaga
-curl http://localhost:8080/actuator/circuitbreakers   # doctorGateway: OPEN
+curl -i -X POST localhost:8080/api/histories \
+  -H 'Content-Type: application/json' \
+  -d '{"clientId":"1","doctorId":1,"diagnosis":"Control","notes":"Demo"}'
+# 503: no fue posible validar mediante RabbitMQ
 
-docker compose start doctor-service         # el circuito vuelve solo a CLOSED</code></pre>
-    <p class="note">El aislamiento es el punto clave: un servicio caído degrada su propia ruta, no la API completa.</p>
+docker compose start doctor-service
+# La siguiente validación vuelve a responder FOUND / NOT_FOUND</code></pre>
+    <p class="note">En <span class="endpoint">localhost:15672</span> se puede observar la cola doctor.validation y sus consumidores.</p>
   </section>
 
   <!-- ══════════════════════════ PLATAFORMA ══════════════════════════ -->
@@ -427,14 +537,15 @@ docker compose start doctor-service         # el circuito vuelve solo a CLOSED</
     <span class="eyebrow">Plataforma · 1 de 3</span>
     <h2>Docker Compose: la plataforma local</h2>
     <div class="grid-3">
-      <div class="card"><h4>8 contenedores</h4><p>Gateway, Eureka, tres servicios y tres motores de base de datos.</p></div>
+      <div class="card"><h4>9 contenedores</h4><p>Gateway, Eureka, RabbitMQ, tres servicios y tres motores de base de datos.</p></div>
       <div class="card"><h4>Arranque ordenado</h4><p>Todos declaran <span class="endpoint">healthcheck</span>; cada servicio espera a que su dependencia esté <em>healthy</em>, no solo iniciada.</p></div>
-      <div class="card"><h4>Estado durable</h4><p>Volúmenes <span class="endpoint">postgres-data</span>, <span class="endpoint">mongo-data</span> y <span class="endpoint">mysql-data</span>.</p></div>
+      <div class="card"><h4>Estado durable</h4><p>Volúmenes para PostgreSQL, MongoDB, MySQL y las definiciones/mensajes de RabbitMQ.</p></div>
     </div>
     <pre><code class="language-bash" data-trim>docker compose up --build --wait
 # API:    http://localhost:8080
-# Eureka: http://localhost:8762</code></pre>
-    <p class="note">Con <span class="endpoint">--wait</span> el comando regresa solo cuando los ocho contenedores están sanos.</p>
+# Eureka: http://localhost:8762
+# Rabbit: http://localhost:15672  (hospital / hospital)</code></pre>
+    <p class="note">Con <span class="endpoint">--wait</span> el comando regresa solo cuando los nueve contenedores están sanos.</p>
   </section>
 
   <section>
@@ -467,17 +578,18 @@ ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]</code></pr
   <section>
     <span class="eyebrow">Plataforma · 3 de 3</span>
     <h2>Red, variables y puertos</h2>
-    <div class="box"><p>Compose crea una red privada con DNS interno: los servicios se llaman por nombre —<span class="endpoint">postgres</span>, <span class="endpoint">mongo</span>, <span class="endpoint">eureka-server</span>— nunca por <span class="endpoint">localhost</span>.</p></div>
+    <div class="box"><p>Compose crea una red privada con DNS interno: los servicios se llaman por nombre —<span class="endpoint">postgres</span>, <span class="endpoint">mongo</span>, <span class="endpoint">rabbitmq</span>— nunca por <span class="endpoint">localhost</span>.</p></div>
     <table class="table">
       <thead><tr><th>Variable</th><th>Ejemplo</th><th>Para qué sirve</th></tr></thead>
       <tbody>
         <tr><td>EUREKA_URL</td><td>http://eureka-server:8761/eureka/</td><td>Registro y descubrimiento</td></tr>
         <tr><td>MONGO_URI</td><td>mongodb://mongo:27017/clinicaldb</td><td>Historias clínicas</td></tr>
         <tr><td>POSTGRES_URL</td><td>jdbc:postgresql://postgres:5432/doctordb</td><td>Médicos</td></tr>
+        <tr><td>RABBITMQ_HOST</td><td>rabbitmq</td><td>Broker para validar médicos</td></tr>
         <tr><td>MYSQL_DSN</td><td>...@tcp(mysql:3306)/clientdb...</td><td>Clientes</td></tr>
       </tbody>
     </table>
-    <p class="note">Solo se publican al host 8080 (API) y 8762 (panel de Eureka). Todo lo demás queda dentro de la red de Compose.</p>
+    <p class="note">Se publican 8080 (API), 8762 (Eureka), 5672 (AMQP) y 15672 (panel RabbitMQ); las bases quedan privadas.</p>
   </section>
 
   <!-- ════════════════════════ STACK Y LIBRERÍAS ════════════════════════ -->
@@ -487,7 +599,7 @@ ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]</code></pr
     <div class="grid-3">
       <div class="card"><h4>Spring Boot 4.0.8</h4><p>Marco base de los cuatro módulos Java: arranque, inyección de dependencias, servidor embebido y endpoints de operación. Sobre Spring Framework 7.</p></div>
       <div class="card"><h4>Java 25</h4><p>Toolchain configurado en Gradle para compilar los cuatro módulos de forma uniforme, independiente del JDK instalado.</p></div>
-      <div class="card"><h4>Spring Cloud 2025.1.3</h4><p>BOM que alinea las versiones compatibles de Eureka, Gateway, OpenFeign y Resilience4j con Spring Boot 4.</p></div>
+      <div class="card"><h4>Spring Cloud 2025.1.3</h4><p>BOM que alinea Eureka, Gateway y Resilience4j. Spring Boot administra Spring AMQP 4.0.5.</p></div>
     </div>
     <pre><code class="language-groovy" data-trim>dependencyManagement {
   imports { mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.1.3" }
@@ -503,8 +615,8 @@ ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]</code></pr
       <tbody>
         <tr><td>eureka-server</td><td><span class="endpoint">spring-cloud-starter-netflix-eureka-server</span> <span class="v">5.0.2</span> · <span class="endpoint">spring-boot-starter-actuator</span> <span class="v">4.0.8</span></td></tr>
         <tr><td>api-gateway</td><td><span class="endpoint">spring-cloud-starter-gateway-server-webflux</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> <span class="v">5.0.2</span> · <span class="endpoint">spring-cloud-starter-circuitbreaker-reactor-resilience4j</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
-        <tr><td>doctor-service</td><td><span class="endpoint">spring-boot-starter-webmvc</span> <span class="v">4.0.8</span> · <span class="endpoint">spring-boot-starter-data-jpa</span> (Hibernate <span class="v">7.2</span>) · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> · <span class="endpoint">org.postgresql:postgresql</span> <span class="v">42.7.13</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
-        <tr><td>clinical-history-service</td><td><span class="endpoint">spring-boot-starter-webmvc</span> · <span class="endpoint">spring-boot-starter-data-mongodb</span> (driver <span class="v">5.6.5</span>) · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> · <span class="endpoint">spring-cloud-starter-openfeign</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-cloud-starter-circuitbreaker-resilience4j</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
+        <tr><td>doctor-service</td><td><span class="endpoint">spring-boot-starter-webmvc</span> <span class="v">4.0.8</span> · <span class="endpoint">spring-boot-starter-data-jpa</span> (Hibernate <span class="v">7.2</span>) · <span class="endpoint">spring-boot-starter-amqp</span> (Spring AMQP <span class="v">4.0.5</span>) · <span class="endpoint">...eureka-client</span> · <span class="endpoint">org.postgresql:postgresql</span> <span class="v">42.7.13</span></td></tr>
+        <tr><td>clinical-history-service</td><td><span class="endpoint">spring-boot-starter-webmvc</span> · <span class="endpoint">spring-boot-starter-data-mongodb</span> (driver <span class="v">5.6.5</span>) · <span class="endpoint">spring-boot-starter-amqp</span> (Spring AMQP <span class="v">4.0.5</span>) · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
         <tr><td>client-service <span class="muted">(Go)</span></td><td><span class="endpoint">github.com/gin-gonic/gin</span> <span class="v">1.12.0</span> · <span class="endpoint">gorm.io/gorm</span> <span class="v">1.31.2</span> · <span class="endpoint">gorm.io/driver/mysql</span> <span class="v">1.6.0</span> · <span class="endpoint">net/http</span> <span class="muted">(estándar, para Eureka)</span></td></tr>
       </tbody>
     </table>
@@ -536,14 +648,15 @@ ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]</code></pr
         <p><span class="endpoint">spring-boot-starter-webmvc</span>: API REST con Spring MVC.</p>
         <p><span class="endpoint">spring-boot-starter-data-jpa</span>: mapea la entidad Doctor con Hibernate 7.</p>
         <p><span class="endpoint">org.postgresql:postgresql</span>: driver JDBC hacia PostgreSQL.</p>
+        <p><span class="endpoint">spring-boot-starter-amqp</span>: consume solicitudes y contesta.</p>
         <p><span class="endpoint">...eureka-client</span>: registra el servicio en Eureka.</p>
       </div>
       <div class="card">
         <h4>clinical-history-service</h4>
         <p><span class="endpoint">spring-boot-starter-webmvc</span>: expone POST y consultas REST.</p>
         <p><span class="endpoint">spring-boot-starter-data-mongodb</span>: guarda documentos ClinicalHistory.</p>
-        <p><span class="endpoint">spring-cloud-starter-openfeign</span>: cliente HTTP declarativo hacia Médicos.</p>
-        <p><span class="endpoint">...circuitbreaker-resilience4j</span>: protege esa consulta con fallback.</p>
+        <p><span class="endpoint">spring-boot-starter-amqp</span>: publica la validación y espera el reply.</p>
+        <p><span class="endpoint">RabbitTemplate</span>: correlation id, reply-to y timeout.</p>
       </div>
     </div>
     <p class="note">En Spring Boot 4, <span class="endpoint">spring-boot-starter-web</span> quedó deprecado a favor de <span class="endpoint">spring-boot-starter-webmvc</span>, que nombra explícitamente la pila servlet.</p>
@@ -585,11 +698,11 @@ ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]</code></pr
     <h2>Demostración sugerida</h2>
     <ol class="compact">
       <li>Levantar el ecosistema: <span class="endpoint">docker compose up --build --wait</span>.</li>
-      <li>Abrir Eureka y verificar los cuatro registros: gateway y tres servicios.</li>
+      <li>Abrir Eureka y verificar los cuatro registros; abrir RabbitMQ en el puerto 15672.</li>
       <li>Crear un médico y un cliente por el gateway.</li>
-      <li>Crear una historia clínica y consultarla por <span class="endpoint">/api/histories/client/1</span>.</li>
-      <li>Detener doctor-service y repetir para evidenciar el fallback y el circuito abierto.</li>
-      <li>Volver a levantarlo y mostrar que el circuito se cierra solo.</li>
+      <li>Crear una historia y observar la cola <span class="endpoint">doctor.validation</span>.</li>
+      <li>Detener doctor-service y repetir: tras 3 s, Historias responde 503.</li>
+      <li>Levantarlo y comprobar que vuelve a consumir sin cambiar URLs ni configuración.</li>
     </ol>
     <pre><code class="language-bash" data-trim>curl -X POST localhost:8080/api/doctors -H 'Content-Type: application/json' -d '{"name":"Dra. Ana Pérez"}'
 curl -X POST localhost:8080/api/clients -H 'Content-Type: application/json' -d '{"name":"Carlos Ruiz"}'
@@ -602,10 +715,10 @@ curl -X POST localhost:8080/api/histories -H 'Content-Type: application/json' \
     <h2>Conclusiones</h2>
     <div class="grid-3">
       <div class="card"><h4>Arquitectura</h4><p>Dominios independientes, bases aisladas y APIs enfocadas en una sola responsabilidad.</p></div>
-      <div class="card"><h4>Conectividad</h4><p>Eureka descubre, el Gateway centraliza y OpenFeign valida entre dominios.</p></div>
-      <div class="card"><h4>Operación</h4><p>Docker Compose reproduce el sistema completo y los circuit breakers contienen los fallos.</p></div>
+      <div class="card"><h4>Conectividad</h4><p>Eureka sirve al Gateway; RabbitMQ desacopla la validación entre Historias y Médicos.</p></div>
+      <div class="card"><h4>Operación</h4><p>Timeout, TTL y ACK hacen explícito qué ocurre con esperas, mensajes vencidos y entregas.</p></div>
     </div>
-    <div class="box"><p><span class="ok">Resultado:</span> una base práctica para evolucionar hacia autenticación, observabilidad, mensajería asíncrona y despliegue en Kubernetes.</p></div>
+    <div class="box"><p><span class="ok">Resultado:</span> Feign salió del enlace interno; la API conserva su comportamiento y la mensajería queda lista para evolucionar hacia eventos realmente asíncronos.</p></div>
     <p class="muted" style="font-size:.55em;text-align:center">Navegación: flechas · Espacio · <strong>Esc</strong> vista general · <strong>S</strong> notas del ponente · <strong>F</strong> pantalla completa</p>
   </section>
 
