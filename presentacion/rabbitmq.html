@@ -139,6 +139,23 @@
   </section>
 
   <section>
+    <span class="eyebrow">Comparación · Eventos vs. HTTP</span>
+    <h2>Qué gana un flujo realmente asíncrono</h2>
+    <table class="table">
+      <thead><tr><th>Aspecto</th><th>HTTP síncrono</th><th>Evento asíncrono</th></tr></thead>
+      <tbody>
+        <tr><td>Tiempo</td><td>Ambos servicios deben estar disponibles simultáneamente.</td><td>La cola conserva el mensaje hasta que el consumidor pueda procesarlo.</td></tr>
+        <tr><td>Acoplamiento</td><td>Ruta, verbo y formato de respuesta compartidos.</td><td>Contrato del evento y destino lógico; no conoce al consumidor.</td></tr>
+        <tr><td>Fan-out</td><td>El emisor llama por separado a cada interesado.</td><td>Un hecho puede alimentar auditoría, alertas y analítica.</td></tr>
+        <tr><td>Picos</td><td>Aumentan conexiones y timeouts.</td><td>La cola amortigua la carga y los consumidores avanzan a su ritmo.</td></tr>
+        <tr><td>Fallo parcial</td><td>La caída del receptor afecta inmediatamente al emisor.</td><td>El emisor puede continuar; el receptor se recupera después.</td></tr>
+        <tr><td>Escalado</td><td>Balanceo de peticiones.</td><td>Consumidores competidores reparten mensajes.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p><strong>Importante en este deck:</strong> request/reply sobre RabbitMQ sigue esperando una respuesta y no obtiene todo el desacoplamiento temporal de un evento. Para eso, la API debería aceptar el trabajo y completarlo después.</p></div>
+  </section>
+
+  <section>
     <span class="eyebrow">Fundamentos · 2 de 2</span>
     <h2>La topología exacta del proyecto</h2>
     <svg class="arch" viewBox="0 0 1160 380" role="img" aria-label="Clinical History publica el ID en el exchange hospital.doctors, se enruta a doctor.validation y Doctor Service consulta PostgreSQL y responde">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Hospital Microservicios con RabbitMQ | Presentación</title>
+  <title>Hospital Microservicios | Presentaciones</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,10 +113,13 @@
     .legend .lg-c{color:var(--cyan)} .legend .lg-g{color:var(--accent)} .legend .lg-v{color:var(--green)}
 
     .reveal .slide-number{background:#0314269e;font-size:.5em}
-    .deck-link{display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:10px 18px;
+    .deck-links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+    .deck-link{display:inline-flex;align-items:center;gap:9px;padding:10px 18px;
       border:1px solid #ff9f4380;border-radius:999px;background:#ff9f4320;color:#ffd8ad!important;
       font-size:.5em;font-weight:800;text-decoration:none;transition:.2s ease}
     .deck-link:hover{background:#ff9f4338;border-color:#ff9f43;transform:translateY(-2px)}
+    .deck-link.kafka{border-color:#7c6cff9c;background:#7c6cff22;color:#d8d2ff!important}
+    .deck-link.kafka:hover{background:#7c6cff3b;border-color:#9b8cff}
 
     @media (max-width:700px){
       .grid-2,.grid-3{grid-template-columns:1fr}
@@ -131,8 +134,11 @@
     <div style="font-size:3.6em">🏥</div>
     <h1>Hospital<br>Microservicios</h1>
     <p class="subtitle">Comunicación entre historias clínicas y médicos mediante mensajería</p>
-    <span class="tag">Spring Boot 4 · RabbitMQ · Eureka · API Gateway · Docker Compose</span>
-    <div><a class="deck-link" href="rabbitmq.html">Ver presentación específica de RabbitMQ →</a></div>
+    <span class="tag">Spring Boot 4 · Kafka · RabbitMQ · Eureka · API Gateway · Docker Compose</span>
+    <div class="deck-links">
+      <a class="deck-link kafka" href="kafka.html">Ver presentación de Kafka →</a>
+      <a class="deck-link" href="rabbitmq.html">Ver presentación de RabbitMQ →</a>
+    </div>
     <aside class="notes">Presentar el objetivo: reemplazar la llamada HTTP directa de OpenFeign por un intercambio request/reply mediante RabbitMQ, sin perder la validación inmediata del médico.</aside>
   </section>
 
@@ -154,6 +160,7 @@
         <ul>
           <li>Exchange, routing key, cola y consumidor</li>
           <li>OpenFeign frente a RabbitMQ</li>
+          <li>Ventajas de eventos frente a HTTP</li>
           <li>Crear una historia clínica</li>
           <li>Qué pasa cuando algo se cae</li>
         </ul>
@@ -444,6 +451,23 @@ public String validate(String id) {
         <tr><td>Modelo natural</td><td>Consulta inmediata</td><td>Eventos/comandos asíncronos; también RPC</td></tr>
       </tbody>
     </table>
+  </section>
+
+  <section>
+    <span class="eyebrow">Integración · Eventos vs. HTTP</span>
+    <h2>Ventajas de una arquitectura por eventos</h2>
+    <table class="table plain">
+      <thead><tr><th>Capacidad</th><th>HTTP síncrono</th><th>Eventos asíncronos</th></tr></thead>
+      <tbody>
+        <tr><td>Disponibilidad</td><td>Emisor y receptor coinciden en el tiempo.</td><td>El broker conserva el evento mientras el consumidor se recupera.</td></tr>
+        <tr><td>Acoplamiento</td><td>Servicio, verbo, ruta y respuesta.</td><td>Tipo y contrato del hecho publicado.</td></tr>
+        <tr><td>Extensibilidad</td><td>Agregar un receptor modifica u obliga a coordinar al emisor.</td><td>Nuevos consumidores se suscriben sin cambiar al productor.</td></tr>
+        <tr><td>Picos de tráfico</td><td>Más conexiones, latencia y timeouts.</td><td>Cola o log amortigua la carga; cada consumidor avanza a su ritmo.</td></tr>
+        <tr><td>Recuperación</td><td>La respuesta es efímera; suele requerir reintentar la petición.</td><td>Retención, ACK u offsets permiten reanudar procesamiento.</td></tr>
+        <tr><td>Usos ideales</td><td>Consultas, validaciones y respuestas inmediatas.</td><td>Auditoría, notificaciones, integración y procesamiento desacoplado.</td></tr>
+      </tbody>
+    </table>
+    <div class="box"><p><span class="highlight">No es una sustitución total:</span> HTTP ofrece simplicidad y consistencia inmediata; los eventos ofrecen resiliencia y evolución independiente a cambio de consistencia eventual, idempotencia y mayor operación.</p></div>
   </section>
 
   <section>

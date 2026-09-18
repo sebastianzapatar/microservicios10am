@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Presentación de Apache Kafka aplicado a los microservicios del hospital">
+  <title>Kafka en los microservicios del hospital | Presentación</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/theme/black.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/highlight/monokai.min.css">
+
+  <style>
+    :root{
+      --r-background-color:#0c0a16;--r-main-font:Inter,system-ui,sans-serif;
+      --r-main-font-size:28px;--r-main-color:#f5f3ff;
+      --r-heading-font:Inter,system-ui,sans-serif;--r-heading-color:#b9abff;
+      --r-heading-text-transform:none;--r-code-font:'JetBrains Mono',ui-monospace,monospace;
+      --purple:#8c7cff;--violet:#b9abff;--pink:#ff6fae;--cyan:#63dcff;
+      --green:#78e6a2;--gold:#ffd66b;--red:#ff7777;--muted:#aaa5c1;
+      --panel:#ffffff0b;--line:#ffffff1d;
+    }
+    body{background:
+      radial-gradient(circle at 84% 8%,#5f3cff42 0,transparent 32%),
+      radial-gradient(circle at 5% 90%,#08779435 0,transparent 31%),#0c0a16}
+    .reveal section{text-align:left}.reveal section.center{text-align:center}
+    .reveal h1,.reveal h2,.reveal h3{font-weight:800;letter-spacing:-.04em;text-shadow:0 7px 24px #0008}
+    .reveal h1{font-size:2.55em;line-height:.98;margin:.16em 0}.reveal h2{font-size:1.62em;margin:0 0 .38em}
+    .reveal h3{font-size:.84em;color:#ddd7ff;margin:0 0 .4em}.reveal p,.reveal li{line-height:1.32}
+    .reveal strong{color:#e2ddff}.kafka{color:var(--violet)}
+    .eyebrow{display:block;color:var(--pink);font-size:.42em;font-weight:800;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.6em}
+    .lead{color:#e8e5f5;font-size:.84em;max-width:950px}.muted{color:var(--muted)!important}
+    .ok{color:var(--green)!important}.bad{color:var(--red)!important}.accent{color:var(--violet)!important;font-weight:800}
+    .pill{display:inline-block;border:1px solid #8c7cff88;background:#8c7cff1c;border-radius:999px;color:#ddd7ff;padding:9px 16px;font-size:.48em;font-weight:800}
+    .home{position:fixed;z-index:30;top:18px;left:20px;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #ffffff29;border-radius:999px;background:#0c0a16d9;color:#e2def4;text-decoration:none;font:600 13px Inter,system-ui,sans-serif;backdrop-filter:blur(8px)}
+    .home:hover{border-color:var(--purple);color:#fff}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.cards.two{grid-template-columns:repeat(2,1fr)}
+    .card,.callout{background:var(--panel);border:1px solid var(--line);box-shadow:0 15px 42px #0005}
+    .card{border-radius:18px;padding:17px 18px}.card h3{color:#ddd7ff}.card p,.card li{font-size:.59em;margin:.35em 0}
+    .card ul{margin:.2em 0 0;padding-left:1.15em}.number{font-size:1.35em;line-height:1;color:var(--pink);font-weight:800;margin-bottom:8px}
+    .callout{border-left:6px solid var(--purple);border-radius:0 16px 16px 0;padding:14px 20px;margin:16px 0}
+    .callout p{font-size:.66em;margin:0}.callout p+p{margin-top:.45em}
+    .flow{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+    .node{min-width:112px;padding:12px 13px;text-align:center;border-radius:15px;border:1px solid #8c7cff78;background:#8c7cff16;font-size:.52em;font-weight:700}
+    .node.cyan{border-color:#63dcff75;background:#63dcff12}.node.green{border-color:#78e6a275;background:#78e6a212}.node.pink{border-color:#ff6fae75;background:#ff6fae12}
+    .arrow{color:var(--pink);font-size:1.08em;font-weight:800}.code{font-family:var(--r-code-font);font-size:.78em;background:#ffffff10;border-radius:6px;padding:2px 6px;color:#fff}
+    .reveal pre{width:100%;margin:11px 0;box-shadow:0 16px 45px #0009;border-radius:15px}
+    .reveal pre code{font-family:var(--r-code-font);font-size:.68em;line-height:1.42;padding:17px 20px;border-radius:15px;max-height:420px}
+    .diagram{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.45em;line-height:1.42;white-space:pre;background:#07060dcc;border:1px solid #8c7cff5c;border-radius:18px;padding:16px 20px;color:#f1effb;overflow-x:auto;width:fit-content;max-width:100%;margin:12px auto}
+    .table{width:100%;border-collapse:collapse;font-size:.5em;background:#ffffff08}.table th,.table td{padding:9px 11px;border:1px solid var(--line);text-align:left;vertical-align:top}
+    .table th{background:#8c7cff29;color:#ddd7ff}.table td:first-child{font-weight:700;color:#c7bcff}.note{font-size:.48em!important;color:var(--muted)!important;margin:.7em 0 0!important}
+    .arch{width:100%;height:auto;display:block;margin:2px 0}.arch text{font-family:Inter,system-ui,sans-serif;fill:#f5f3ff}
+    .arch .title{font-weight:800;font-size:18px}.arch .small{font-size:13px;fill:#aaa5c1}.arch .mono{font:600 14px 'JetBrains Mono',monospace;fill:#ddd7ff}.arch .label{font-size:13px;font-weight:700;fill:#ff89bc}
+    .topic{display:grid;grid-template-columns:145px 1fr;gap:10px;align-items:center;margin:12px 0}.topic-name{font:700 .5em 'JetBrains Mono',monospace;color:#ddd7ff;text-align:right}
+    .partition{display:flex;gap:5px;background:#ffffff08;border:1px solid var(--line);border-radius:12px;padding:8px}.record{flex:1;min-width:0;padding:8px 4px;border-radius:7px;background:#8c7cff35;text-align:center;font:600 .42em 'JetBrains Mono',monospace}.record:nth-child(2n){background:#ff6fae29}
+    .reveal .slide-number{background:#07060dc9;font-size:.48em}@media(max-width:700px){.cards,.cards.two{grid-template-columns:1fr}.home{display:none}}
+  </style>
+</head>
+<body>
+<a class="home" href="index.html" aria-label="Volver a la presentación general">← Presentación general</a>
+<div class="reveal"><div class="slides">
+
+  <section class="center">
+    <div style="font-size:3.1em;line-height:1">🏥</div>
+    <span class="eyebrow">Arquitectura orientada a eventos</span>
+    <h1><span class="kafka">Apache Kafka</span> en los<br>microservicios del hospital</h1>
+    <p class="lead" style="margin-inline:auto">Cómo Médicos, Pacientes e Historias publican cambios sin acoplarse a sus consumidores.</p>
+    <span class="pill">Kafka 4.1 · KRaft · Spring Boot 4 · Go · Docker Compose</span>
+    <aside class="notes">Presentar la idea central: REST atiende comandos y consultas; Kafka distribuye hechos que ya ocurrieron.</aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">Contexto · 1 de 2</span>
+    <h2>Dos formas de comunicarse</h2>
+    <div class="cards two">
+      <div class="card"><div class="number">HTTP</div><h3>Necesito una respuesta ahora</h3><p>El Gateway enruta solicitudes. Historias consulta a Médicos con OpenFeign para validar una regla antes de guardar.</p><p class="muted">Acoplamiento temporal deliberado.</p></div>
+      <div class="card"><div class="number">Kafka</div><h3>Este cambio ya ocurrió</h3><p>Cada dominio publica un evento. Auditoría lo procesa después, sin bloquear la respuesta HTTP.</p><p class="muted">Integración asíncrona y extensible.</p></div>
+    </div>
+    <div class="callout"><p>Kafka <strong>complementa</strong> REST: no reemplaza la validación inmediata del médico. Se usa donde la consistencia eventual es apropiada.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Contexto · 2 de 2</span>
+    <h2>¿Qué problema resuelve?</h2>
+    <div class="cards">
+      <div class="card"><div class="number">01</div><h3>Desacoplamiento</h3><p>El productor no conoce quién consumirá ni cuántos consumidores aparecerán mañana.</p></div>
+      <div class="card"><div class="number">02</div><h3>Reproducción</h3><p>Los eventos quedan en el log y una vista puede reconstruirse desde sus offsets.</p></div>
+      <div class="card"><div class="number">03</div><h3>Orden por entidad</h3><p>Una clave estable envía los cambios del mismo agregado a la misma partición.</p></div>
+    </div>
+    <div class="callout"><p>El resultado es un contrato de eventos común, pero <strong>sin compartir bases de datos</strong> entre dominios.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Comparación · Eventos vs. HTTP</span>
+    <h2>Ventajas de comunicar mediante eventos</h2>
+    <table class="table">
+      <thead><tr><th>Aspecto</th><th>HTTP síncrono</th><th>Eventos con Kafka</th></tr></thead>
+      <tbody>
+        <tr><td>Disponibilidad</td><td>Emisor y receptor deben responder al mismo tiempo.</td><td>El productor termina aunque el consumidor esté temporalmente detenido.</td></tr>
+        <tr><td>Acoplamiento</td><td>Conoce servicio, verbo, ruta y respuesta.</td><td>Solo conoce el tipo y contrato del evento.</td></tr>
+        <tr><td>Nuevos consumidores</td><td>Cada integración exige otra llamada o cambio en el emisor.</td><td>Auditoría, alertas o analítica se suscriben sin modificar productores.</td></tr>
+        <tr><td>Picos de carga</td><td>Se convierten en conexiones, latencia y posibles timeouts.</td><td>El log amortigua el pico y cada consumidor avanza a su ritmo.</td></tr>
+        <tr><td>Recuperación</td><td>La respuesta desaparece al terminar la petición.</td><td>Offsets y retención permiten reanudar o reconstruir vistas.</td></tr>
+        <tr><td>Escalado</td><td>Se balancean solicitudes entre instancias.</td><td>Particiones y grupos distribuyen trabajo en paralelo.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p><strong>Trade-off:</strong> los eventos introducen consistencia eventual, duplicados posibles y más operación. HTTP sigue siendo preferible para consultas y decisiones que necesitan respuesta inmediata.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura</span>
+    <h2>El recorrido completo</h2>
+    <svg class="arch" viewBox="0 0 1180 450" role="img" aria-label="Gateway, tres servicios de dominio, Kafka y Audit Service">
+      <defs>
+        <marker id="a-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8c7cff"/></marker>
+        <marker id="a-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff6fae"/></marker>
+        <marker id="a-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#63dcff"/></marker>
+      </defs>
+      <rect x="20" y="168" width="155" height="92" rx="17" fill="#63dcff16" stroke="#63dcff" stroke-width="2"/><text class="title" x="97" y="207" text-anchor="middle">API Gateway</text><text class="mono" x="97" y="235" text-anchor="middle">:8080</text>
+      <path d="M175 214H245M245 70V358M245 70H322M245 214H322M245 358H322" fill="none" stroke="#63dcff" stroke-width="2.5"/>
+      <rect x="328" y="25" width="250" height="90" rx="17" fill="#ffffff0c" stroke="#ffffff4a" stroke-width="2"/><text class="title" x="453" y="62" text-anchor="middle">doctor-service</text><text class="small" x="453" y="88" text-anchor="middle">PostgreSQL · Spring Boot</text>
+      <rect x="328" y="169" width="250" height="90" rx="17" fill="#ffffff0c" stroke="#ffffff4a" stroke-width="2"/><text class="title" x="453" y="206" text-anchor="middle">clinical-history-service</text><text class="small" x="453" y="232" text-anchor="middle">MongoDB · Spring Boot</text>
+      <rect x="328" y="313" width="250" height="90" rx="17" fill="#ffffff0c" stroke="#ffffff4a" stroke-width="2"/><text class="title" x="453" y="350" text-anchor="middle">client-service</text><text class="small" x="453" y="376" text-anchor="middle">MySQL · Go</text>
+      <path d="M578 70H665M578 214H665M578 358H665" fill="none" stroke="#ff6fae" stroke-width="2.7" marker-end="url(#a-pink)"/><text class="label" x="620" y="48" text-anchor="middle">publican</text>
+      <rect x="672" y="132" width="210" height="164" rx="22" fill="#8c7cff20" stroke="#8c7cff" stroke-width="3"/><text class="title" x="777" y="176" text-anchor="middle">Apache Kafka</text><text class="mono" x="777" y="207" text-anchor="middle">hospital.events</text><text class="small" x="777" y="238" text-anchor="middle">3 particiones</text><text class="small" x="777" y="264" text-anchor="middle">KRaft · log persistente</text>
+      <line x1="882" y1="214" x2="968" y2="214" stroke="#8c7cff" stroke-width="2.7" marker-end="url(#a-purple)"/><text class="label" x="925" y="192" text-anchor="middle">consume</text>
+      <rect x="974" y="155" width="185" height="118" rx="18" fill="#78e6a218" stroke="#78e6a2" stroke-width="2"/><text class="title" x="1066" y="196" text-anchor="middle">audit-service</text><text class="mono" x="1066" y="226" text-anchor="middle">/api/events</text><text class="small" x="1066" y="251" text-anchor="middle">vista deduplicada</text>
+      <path d="M1066 273V350H97V260" fill="none" stroke="#63dcff" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#a-cyan)"/><text class="small" x="640" y="376" text-anchor="middle">consulta de eventos por el mismo Gateway</text>
+    </svg>
+  </section>
+
+  <section>
+    <span class="eyebrow">Fundamentos · 1 de 2</span>
+    <h2>Kafka es un log distribuido</h2>
+    <div class="topic"><div class="topic-name">partición 0</div><div class="partition"><div class="record">offset 0</div><div class="record">offset 1</div><div class="record">offset 2</div><div class="record">offset 3</div></div></div>
+    <div class="topic"><div class="topic-name">partición 1</div><div class="partition"><div class="record">offset 0</div><div class="record">offset 1</div><div class="record">offset 2</div></div></div>
+    <div class="topic"><div class="topic-name">partición 2</div><div class="partition"><div class="record">offset 0</div><div class="record">offset 1</div><div class="record">offset 2</div><div class="record">offset 3</div><div class="record">offset 4</div></div></div>
+    <div class="cards">
+      <div class="card"><h3>Tópico</h3><p>Canal lógico donde se anexan eventos: <span class="code">hospital.events</span>.</p></div>
+      <div class="card"><h3>Partición</h3><p>Unidad de paralelismo. El orden está garantizado dentro de una partición.</p></div>
+      <div class="card"><h3>Offset</h3><p>Posición de lectura del consumidor. Permite continuar o reproducir.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Fundamentos · 2 de 2</span>
+    <h2>Clave y grupo de consumo</h2>
+    <div class="flow">
+      <div class="node cyan">aggregateId<br><span class="muted">doctor:11</span></div><div class="arrow">→</div>
+      <div class="node pink">hash(clave)<br><span class="muted">elige partición</span></div><div class="arrow">→</div>
+      <div class="node">partición 1<br><span class="muted">orden estable</span></div><div class="arrow">→</div>
+      <div class="node green">audit-service<br><span class="muted">procesa</span></div>
+    </div>
+    <table class="table">
+      <thead><tr><th>Concepto</th><th>Decisión del proyecto</th><th>Efecto</th></tr></thead>
+      <tbody>
+        <tr><td>Clave</td><td><span class="code">doctor:id</span>, <span class="code">client:id</span>, <span class="code">history:id</span></td><td>Los cambios de la misma entidad conservan su orden.</td></tr>
+        <tr><td>Grupo</td><td>Un grupo propio por instancia de auditoría.</td><td>Cada vista local recibe todo el log y puede reconstruirse.</td></tr>
+        <tr><td>ACK / offset</td><td>Confirmación por registro procesado.</td><td>Kafka puede reentregar; el consumidor debe ser idempotente.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <span class="eyebrow">Contrato</span>
+    <h2>Un sobre común para todos los eventos</h2>
+    <pre><code class="language-json" data-trim data-line-numbers="1-6|7-11">{
+  "eventId": "12e8...",
+  "eventType": "clinical-history.created",
+  "aggregateId": "history:6aada79e...",
+  "occurredAt": "2026-09-18T21:05:34Z",
+  "payload": {
+    "id": "6aada79e...",
+    "clientId": "6",
+    "doctorId": 11,
+    "diagnosis": "Control general"
+  }
+}</code></pre>
+    <div class="cards two">
+      <div class="card"><h3>Metadatos</h3><p>Identidad, tipo, agregado y tiempo permiten deduplicar, filtrar y rastrear.</p></div>
+      <div class="card"><h3>Payload</h3><p>Transporta la información específica sin exponer la entidad de persistencia.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Productores</span>
+    <h2>Java y Go publican el mismo contrato</h2>
+    <div class="cards two">
+      <div class="card"><h3>Spring Boot · Médicos e Historias</h3><pre><code class="language-java" data-trim>String key = "doctor:" + doctorId;
+DomainEvent event = DomainEvent.of(
+    "doctor.created", key, payload);
+
+kafka.send(topic, key, event)
+    .whenComplete(this::reportResult);</code></pre><p><span class="code">acks=all</span> + productor idempotente.</p></div>
+      <div class="card"><h3>Go · Pacientes</h3><pre><code class="language-go" data-trim>producer.SendMessage(&sarama.ProducerMessage{
+    Topic: "hospital.events",
+    Key:   sarama.StringEncoder(key),
+    Value: sarama.ByteEncoder(value),
+})</code></pre><p>Sarama usa <span class="code">WaitForAll</span>, reintentos e idempotencia.</p></div>
+    </div>
+    <p class="note">El formato JSON permite interoperar sin compartir código Java con el servicio Go.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Consumidor</span>
+    <h2>Audit Service construye una vista</h2>
+    <pre><code class="language-java" data-trim data-line-numbers="1|3-5|6-10">@KafkaListener(topics = "${hospital.kafka.topic:hospital.events}")
+public void receive(DomainEvent event) {
+  if (byId.putIfAbsent(event.eventId(), event) != null) {
+    return; // reentrega ya procesada
+  }
+  events.addFirst(event);
+  while (events.size() > maxEvents) {
+    DomainEvent removed = events.pollLast();
+    byId.remove(removed.eventId(), removed);
+  }
+}</code></pre>
+    <div class="cards">
+      <div class="card"><h3>Idempotencia</h3><p><span class="code">eventId</span> evita duplicados visibles.</p></div>
+      <div class="card"><h3>Límite</h3><p>Conserva los 1000 eventos más recientes.</p></div>
+      <div class="card"><h3>Consulta</h3><p><span class="code">GET /api/events</span> y filtro por tipo.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Flujo extremo a extremo</span>
+    <h2>Crear una historia y observar su evento</h2>
+    <pre class="diagram">Cliente        Gateway       Historias        Doctor          MongoDB        Kafka          Auditoría
+  │ POST /histories │             │ GET /doctors │                │              │                │
+  ├───────────────►├────────────►├─────────────►│                │              │                │
+  │                │             │◄──── 200 ────┤                │              │                │
+  │                │             ├────────────── save ──────────►│              │                │
+  │                │             │ publish clinical-history.created ──────────►│                │
+  │◄──── 201 ──────┤◄────────────┤                              │              ├───────────────►│
+  │                │             │                              │              │   actualiza vista│</pre>
+    <div class="callout"><p>Primero se confirma la regla y la escritura. Después se publica el <strong>hecho consumado</strong>; auditoría no participa en la respuesta 201.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Confiabilidad</span>
+    <h2>Qué garantiza y qué no</h2>
+    <table class="table">
+      <thead><tr><th>Mecanismo</th><th>Qué aporta</th><th>Límite</th></tr></thead>
+      <tbody>
+        <tr><td><span class="code">acks=all</span></td><td>El líder confirma la escritura según el ISR.</td><td>En local hay un único broker.</td></tr>
+        <tr><td>Productor idempotente</td><td>Evita duplicados producidos por reintentos de red.</td><td>No deduplica operaciones de negocio distintas.</td></tr>
+        <tr><td>Clave estable</td><td>Orden por agregado dentro de su partición.</td><td>No existe orden global entre las 3 particiones.</td></tr>
+        <tr><td>Consumidor idempotente</td><td>Tolera reentrega del mismo <span class="code">eventId</span>.</td><td>La vista demostrativa vive en memoria.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p><strong>Siguiente paso de producción:</strong> patrón Transactional Outbox para hacer atómica la escritura en la base y el registro pendiente de publicación.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Infraestructura</span>
+    <h2>Kafka en KRaft, sin ZooKeeper</h2>
+    <pre><code class="language-yaml" data-trim data-line-numbers="1-3|4-10|11-15">kafka:
+  image: apache/kafka:4.1.0
+  environment:
+    KAFKA_NODE_ID: 1
+    KAFKA_PROCESS_ROLES: broker,controller
+    KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+    KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+    KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+    KAFKA_NUM_PARTITIONS: 3
+  volumes: [kafka-data:/var/lib/kafka/data]
+  healthcheck:
+    test: ["CMD-SHELL",
+      "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]</code></pre>
+    <p class="note">Compose inicia los productores y el consumidor únicamente después de que el broker responde al healthcheck.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Demostración</span>
+    <h2>Cómo verlo funcionando</h2>
+    <pre><code class="language-bash" data-trim>docker compose up --build --wait
+
+curl -X POST localhost:8080/api/doctors \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Dra. Ana Pérez"}'
+
+curl -X POST localhost:8080/api/clients \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Carlos Ruiz"}'
+
+curl localhost:8080/api/events
+curl 'localhost:8080/api/events?eventType=client.created'</code></pre>
+    <div class="cards two">
+      <div class="card"><h3>Inspeccionar el tópico</h3><p><span class="code">docker compose exec kafka kafka-topics.sh ... --describe</span></p></div>
+      <div class="card"><h3>Probar replay</h3><p>Recrear <span class="code">audit-service</span> y comprobar que reconstruye la vista.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Resultado comprobado</span>
+    <h2>La integración funciona de punta a punta</h2>
+    <div class="cards">
+      <div class="card"><div class="number">3</div><h3>Productores</h3><p>Médicos, Pacientes e Historias publican con un contrato interoperable.</p></div>
+      <div class="card"><div class="number">5</div><h3>Tipos de evento</h3><p>Creación y actualización observables desde el Gateway.</p></div>
+      <div class="card"><div class="number">3</div><h3>Particiones</h3><p>Líder e ISR verificados; orden por clave de agregado.</p></div>
+    </div>
+    <div class="callout"><p><span class="accent">Idea final:</span> REST protege las decisiones inmediatas del dominio; Kafka propaga hechos, permite sumar consumidores y desacopla la evolución del sistema.</p></div>
+    <p class="muted" style="font-size:.52em;text-align:center">Flechas: navegar · Esc: vista general · S: notas · F: pantalla completa<br><a href="index.html" style="color:#b9abff">← Volver a la presentación general</a></p>
+  </section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/search.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash:true,slideNumber:'c/t',transition:'fade',backgroundTransition:'fade',center:true,
+    width:1280,height:720,margin:.06,minScale:.2,maxScale:1.6,
+    plugins:[RevealHighlight,RevealNotes,RevealZoom,RevealSearch]
+  });
+</script>
+</body>
+</html>
