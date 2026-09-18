@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Presentación de RabbitMQ aplicada al sistema de microservicios del hospital">
+  <title>RabbitMQ en el sistema hospitalario | Presentación</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/theme/black.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/highlight/monokai.min.css">
+
+  <style>
+    :root{
+      --r-background-color:#101522;--r-main-font:Inter,system-ui,sans-serif;
+      --r-main-font-size:28px;--r-main-color:#f6f7fb;
+      --r-heading-font:Inter,system-ui,sans-serif;--r-heading-color:#ffb25b;
+      --r-heading-text-transform:none;--r-code-font:'JetBrains Mono',ui-monospace,monospace;
+      --orange:#ff7900;--orange-2:#ffb25b;--cream:#fff1df;--blue:#5dd6ff;
+      --green:#74e39a;--red:#ff7777;--muted:#acb7cc;--panel:#ffffff0b;--line:#ffffff1f;
+    }
+    body{background:
+      radial-gradient(circle at 82% 5%,#8f380040 0,transparent 32%),
+      radial-gradient(circle at 5% 92%,#104f6640 0,transparent 32%),#101522}
+    .reveal section{text-align:left}
+    .reveal section.center{text-align:center}
+    .reveal h1,.reveal h2,.reveal h3{font-weight:800;letter-spacing:-.04em;text-shadow:0 7px 24px #0007}
+    .reveal h1{font-size:2.55em;line-height:.98;margin:.16em 0}
+    .reveal h2{font-size:1.65em;margin:0 0 .38em}
+    .reveal h3{font-size:.85em;color:var(--cream);margin:0 0 .4em}
+    .reveal p,.reveal li{line-height:1.32}
+    .reveal strong{color:var(--cream)}
+    .rabbit{color:var(--orange)}
+    .eyebrow{display:block;color:var(--orange-2);font-size:.42em;font-weight:800;
+      letter-spacing:.2em;text-transform:uppercase;margin-bottom:.6em}
+    .lead{color:#e6e9f2;font-size:.86em;max-width:920px}
+    .muted{color:var(--muted)!important}.ok{color:var(--green)!important}.bad{color:var(--red)!important}
+    .accent{color:var(--orange-2)!important;font-weight:800}
+    .pill{display:inline-block;border:1px solid #ff790080;background:#ff79001c;border-radius:999px;
+      color:#ffd8ae;padding:9px 16px;font-size:.48em;font-weight:800}
+    .home{position:fixed;z-index:30;top:18px;left:20px;display:inline-flex;align-items:center;gap:7px;
+      padding:8px 12px;border:1px solid #ffffff29;border-radius:999px;background:#101522cc;
+      color:#dfe6f2;text-decoration:none;font:600 13px Inter,system-ui,sans-serif;backdrop-filter:blur(8px)}
+    .home:hover{border-color:var(--orange);color:#fff}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .cards.two{grid-template-columns:repeat(2,1fr)}
+    .card,.callout{background:var(--panel);border:1px solid var(--line);box-shadow:0 15px 42px #0004}
+    .card{border-radius:18px;padding:17px 18px}
+    .card h3{color:#ffd2a2}.card p,.card li{font-size:.59em;margin:.35em 0}
+    .card ul{margin:.2em 0 0;padding-left:1.15em}
+    .number{font-size:1.35em;line-height:1;color:var(--orange);font-weight:800;margin-bottom:8px}
+    .callout{border-left:6px solid var(--orange);border-radius:0 16px 16px 0;padding:14px 20px;margin:16px 0}
+    .callout p{font-size:.66em;margin:0}.callout p+p{margin-top:.45em}
+    .flow{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+    .node{min-width:110px;padding:12px 13px;text-align:center;border-radius:15px;border:1px solid #ffb25b66;
+      background:#ff790015;font-size:.52em;font-weight:700}
+    .node.blue{border-color:#5dd6ff70;background:#5dd6ff13}
+    .node.green{border-color:#74e39a70;background:#74e39a13}
+    .arrow{color:var(--orange-2);font-size:1.08em;font-weight:800}
+    .code{font-family:var(--r-code-font);font-size:.78em;background:#ffffff10;border-radius:6px;padding:2px 6px;color:#fff}
+    .reveal pre{width:100%;margin:11px 0;box-shadow:0 16px 45px #0009;border-radius:15px}
+    .reveal pre code{font-family:var(--r-code-font);font-size:.68em;line-height:1.42;padding:17px 20px;
+      border-radius:15px;max-height:420px}
+    .diagram{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.46em;line-height:1.42;
+      white-space:pre;background:#080d16cc;border:1px solid #ff79004f;border-radius:18px;padding:16px 20px;
+      color:#f2f4f8;overflow-x:auto;width:fit-content;max-width:100%;margin:12px auto}
+    .table{width:100%;border-collapse:collapse;font-size:.5em;background:#ffffff08}
+    .table th,.table td{padding:9px 11px;border:1px solid var(--line);text-align:left;vertical-align:top}
+    .table th{background:#ff790028;color:#ffd8ad}.table td:first-child{font-weight:700;color:#ffca8e}
+    .note{font-size:.48em!important;color:var(--muted)!important;margin:.7em 0 0!important}
+    .arch{width:100%;height:auto;display:block;margin:2px 0}
+    .arch text{font-family:Inter,system-ui,sans-serif;fill:#f6f7fb}
+    .arch .title{font-weight:800;font-size:19px}.arch .small{font-size:13px;fill:#acb7cc}
+    .arch .mono{font:600 14px 'JetBrains Mono',monospace;fill:#ffd8ad}
+    .arch .label{font-size:13px;font-weight:700;fill:#ffb25b}
+    .status-grid{display:grid;grid-template-columns:130px 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);font-size:.5em}
+    .status-grid>div{background:#151b29;padding:10px 12px}.status-grid .head{background:#3c2617;color:#ffd8ad;font-weight:800}
+    .status-grid .s400{color:#ffd36e;font-weight:800}.status-grid .s503{color:var(--red);font-weight:800}.status-grid .s200{color:var(--green);font-weight:800}
+    .reveal .slide-number{background:#080d16c9;font-size:.48em}
+    @media(max-width:700px){.cards,.cards.two{grid-template-columns:1fr}.home{display:none}}
+  </style>
+</head>
+<body>
+<a class="home" href="index.html" aria-label="Volver a la presentación general">← Presentación general</a>
+<div class="reveal"><div class="slides">
+
+  <section class="center">
+    <div style="font-size:3.1em;line-height:1">🐇</div>
+    <span class="eyebrow">Mensajería aplicada</span>
+    <h1><span class="rabbit">RabbitMQ</span> en el<br>sistema hospitalario</h1>
+    <p class="lead" style="margin-inline:auto">Cómo historias clínicas valida médicos mediante AMQP sin depender de una llamada HTTP directa.</p>
+    <span class="pill">Spring AMQP · Request/Reply · Direct Exchange · Docker Compose</span>
+    <aside class="notes">Abrir con la idea central: no es una charla abstracta. Cada concepto se muestra con el código y los nombres reales del proyecto.</aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">Contexto · 1 de 2</span>
+    <h2>La regla que debemos proteger</h2>
+    <div class="callout"><p>Una historia clínica solo puede guardarse si el <strong>médico existe</strong>. Médicos vive en PostgreSQL; Historias vive en MongoDB.</p></div>
+    <div class="cards">
+      <div class="card"><div class="number">01</div><h3>Antes</h3><p>Historias llamaba directamente a la API HTTP de Médicos mediante OpenFeign.</p></div>
+      <div class="card"><div class="number">02</div><h3>Problema</h3><p>La integración conocía el verbo, la ruta HTTP y la disponibilidad inmediata de otra instancia.</p></div>
+      <div class="card"><div class="number">03</div><h3>Ahora</h3><p>Historias publica un mensaje; RabbitMQ encuentra un consumidor y correlaciona la respuesta.</p></div>
+    </div>
+    <p class="note">La API pública sigue siendo REST. Solo cambia el transporte interno entre los dos dominios.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Contexto · 2 de 2</span>
+    <h2>¿Por qué introducir un broker?</h2>
+    <div class="cards two">
+      <div class="card"><h3>Desacoplamiento espacial</h3><p>El productor no conoce la IP, el puerto ni la cantidad de instancias de <span class="code">doctor-service</span>.</p></div>
+      <div class="card"><h3>Amortiguación</h3><p>La cola retiene solicitudes brevemente cuando el consumidor está ocupado.</p></div>
+      <div class="card"><h3>Distribución de carga</h3><p>Con varias instancias consumidoras, RabbitMQ entrega cada mensaje a una sola de ellas.</p></div>
+      <div class="card"><h3>Observabilidad</h3><p>Conexiones, canales, colas y tasas de mensajes pueden verse en el panel de administración.</p></div>
+    </div>
+    <div class="callout"><p>RabbitMQ desacopla el <strong>destino físico</strong>; no elimina el contrato entre servicios ni vuelve asíncrona automáticamente toda la operación.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Fundamentos · 1 de 2</span>
+    <h2>Las cuatro piezas del recorrido</h2>
+    <div class="flow">
+      <div class="node blue">Productor<br><span class="muted">publica</span></div><div class="arrow">→</div>
+      <div class="node">Exchange<br><span class="muted">enruta</span></div><div class="arrow">→</div>
+      <div class="node">Queue<br><span class="muted">retiene</span></div><div class="arrow">→</div>
+      <div class="node green">Consumidor<br><span class="muted">procesa + ACK</span></div>
+    </div>
+    <div class="cards">
+      <div class="card"><h3>Exchange</h3><p>Recibe la publicación y aplica bindings. En este proyecto es de tipo <strong>direct</strong>.</p></div>
+      <div class="card"><h3>Routing key + binding</h3><p>La clave del mensaje debe coincidir exactamente con la clave que conecta exchange y cola.</p></div>
+      <div class="card"><h3>Queue</h3><p>Entrega el mensaje a un consumidor. El ACK confirma que terminó correctamente.</p></div>
+    </div>
+    <aside class="notes">Aclarar que el productor no publica directamente en la cola: publica en el exchange indicando una routing key.</aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">Fundamentos · 2 de 2</span>
+    <h2>La topología exacta del proyecto</h2>
+    <svg class="arch" viewBox="0 0 1160 380" role="img" aria-label="Clinical History publica el ID en el exchange hospital.doctors, se enruta a doctor.validation y Doctor Service consulta PostgreSQL y responde">
+      <defs>
+        <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff7900"/></marker>
+        <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5dd6ff"/></marker>
+      </defs>
+      <rect x="20" y="105" width="235" height="112" rx="18" fill="#5dd6ff18" stroke="#5dd6ff" stroke-width="2"/>
+      <text class="title" x="137" y="145" text-anchor="middle">Clinical History</text><text class="small" x="137" y="171" text-anchor="middle">productor · RabbitTemplate</text><text class="mono" x="137" y="196" text-anchor="middle">doctorId = "1"</text>
+      <line x1="255" y1="161" x2="365" y2="161" stroke="#ff7900" stroke-width="3" marker-end="url(#arrow-orange)"/><text class="label" x="310" y="140" text-anchor="middle">publica</text>
+      <rect x="371" y="88" width="250" height="146" rx="18" fill="#ff79001c" stroke="#ff7900" stroke-width="2.5"/>
+      <text class="title" x="496" y="129" text-anchor="middle">Direct exchange</text><text class="mono" x="496" y="158" text-anchor="middle">hospital.doctors</text><text class="small" x="496" y="191" text-anchor="middle">routing key</text><text class="mono" x="496" y="213" text-anchor="middle">doctor.validation.request</text>
+      <line x1="621" y1="161" x2="714" y2="161" stroke="#ff7900" stroke-width="3" marker-end="url(#arrow-orange)"/><text class="label" x="668" y="140" text-anchor="middle">binding</text>
+      <rect x="720" y="105" width="210" height="112" rx="18" fill="#ff790014" stroke="#ffb25b" stroke-width="2"/>
+      <text class="title" x="825" y="145" text-anchor="middle">Queue</text><text class="mono" x="825" y="175" text-anchor="middle">doctor.validation</text><text class="small" x="825" y="199" text-anchor="middle">durable · TTL 5 s</text>
+      <line x1="930" y1="161" x2="1010" y2="161" stroke="#ff7900" stroke-width="3" marker-end="url(#arrow-orange)"/>
+      <rect x="1016" y="105" width="130" height="112" rx="18" fill="#74e39a16" stroke="#74e39a" stroke-width="2"/>
+      <text class="title" x="1081" y="145" text-anchor="middle">Doctor</text><text class="small" x="1081" y="171" text-anchor="middle">@RabbitListener</text><text class="mono" x="1081" y="196" text-anchor="middle">PostgreSQL</text>
+      <path d="M1081 225V296H137V225" fill="none" stroke="#5dd6ff" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#arrow-blue)"/>
+      <text class="label" x="610" y="286" text-anchor="middle" fill="#5dd6ff">respuesta: FOUND / NOT_FOUND · correlationId · reply-to</text>
+    </svg>
+    <p class="note">Ambos servicios declaran los mismos nombres. La declaración es idempotente si los atributos coinciden.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Request/reply · 1 de 3</span>
+    <h2>El flujo completo de una validación</h2>
+    <div class="cards">
+      <div class="card"><div class="number">1</div><h3>Solicitud</h3><p>Historias envía el ID con <span class="code">convertSendAndReceive</span>.</p></div>
+      <div class="card"><div class="number">2</div><h3>Enrutamiento</h3><p>El direct exchange hace coincidir la routing key con el binding.</p></div>
+      <div class="card"><div class="number">3</div><h3>Consumo</h3><p>El listener obtiene el ID y pregunta a <span class="code">DoctorService</span>.</p></div>
+      <div class="card"><div class="number">4</div><h3>Respuesta</h3><p>El valor retornado viaja a <span class="code">amq.rabbitmq.reply-to</span>.</p></div>
+      <div class="card"><div class="number">5</div><h3>Correlación</h3><p>El correlation ID entrega el reply a la llamada que lo originó.</p></div>
+      <div class="card"><div class="number">6</div><h3>Decisión</h3><p>FOUND permite guardar; NOT_FOUND produce 400; timeout produce 503.</p></div>
+    </div>
+    <div class="callout"><p>El broker transporta mensajes, pero la petición HTTP <strong>sigue esperando</strong>. Es RPC sobre RabbitMQ.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Request/reply · 2 de 3</span>
+    <h2>Productor: Clinical History Service</h2>
+    <pre><code class="language-java" data-trim data-line-numbers="1-4|6-8|10-13">Object reply = rabbit.convertSendAndReceive(
+    RabbitTopology.EXCHANGE,
+    RabbitTopology.VALIDATION_ROUTING_KEY,
+    doctorId.toString());
+
+if (reply == null) {
+  return DoctorValidationResult.UNAVAILABLE;
+}
+
+try {
+  return DoctorValidationResult.valueOf(reply.toString());
+} catch (IllegalArgumentException unexpectedReply) {
+  return DoctorValidationResult.UNAVAILABLE;
+}</code></pre>
+    <div class="cards two">
+      <div class="card"><h3>Contrato pequeño</h3><p>La solicitud contiene el ID como texto; la respuesta solo puede ser FOUND o NOT_FOUND.</p></div>
+      <div class="card"><h3>Fallo explícito</h3><p>Un timeout, error AMQP o reply desconocido se convierte en UNAVAILABLE.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Request/reply · 3 de 3</span>
+    <h2>Consumidor: Doctor Service</h2>
+    <pre><code class="language-java" data-trim data-line-numbers="1|3-9">@RabbitListener(queues = RabbitTopology.VALIDATION_QUEUE)
+public String validate(String rawDoctorId) {
+  try {
+    Long doctorId = Long.valueOf(rawDoctorId);
+    return doctors.exists(doctorId) ? "FOUND" : "NOT_FOUND";
+  } catch (NumberFormatException invalidMessage) {
+    return "NOT_FOUND";
+  }
+}</code></pre>
+    <div class="cards two">
+      <div class="card"><h3>Respuesta automática</h3><p>Spring publica el valor retornado en el <span class="code">reply-to</span> del mensaje original y conserva su correlation ID.</p></div>
+      <div class="card"><h3>ACK automático</h3><p>Con <span class="code">acknowledge-mode: auto</span>, el mensaje se confirma al terminar el listener sin error.</p></div>
+    </div>
+    <p class="note">Una carga no numérica se responde como NOT_FOUND para evitar reintentos infinitos de un mensaje inválido.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Confiabilidad · 1 de 2</span>
+    <h2>Dos relojes evitan trabajo obsoleto</h2>
+    <div class="flow">
+      <div class="node blue">t = 0 s<br><span class="muted">publicación</span></div><div class="arrow">→</div>
+      <div class="node" style="border-color:#ff7777">t = 3 s<br><span class="bad">reply timeout</span></div><div class="arrow">→</div>
+      <div class="node" style="border-color:#ff7777">t = 5 s<br><span class="bad">TTL de la cola</span></div>
+    </div>
+    <div class="cards two">
+      <div class="card"><h3>Timeout de 3 segundos</h3><p>El cliente deja de esperar, produce UNAVAILABLE y la API responde <span class="code">503</span>.</p></div>
+      <div class="card"><h3>TTL de 5 segundos</h3><p>RabbitMQ descarta una solicitud RPC vieja antes de que un consumidor recuperado procese trabajo inútil.</p></div>
+    </div>
+    <pre><code class="language-yaml" data-trim>spring:
+  rabbitmq:
+    template:
+      reply-timeout: 3s
+
+# RabbitTopology.java
+QueueBuilder.durable("doctor.validation").ttl(5_000).build();</code></pre>
+  </section>
+
+  <section>
+    <span class="eyebrow">Confiabilidad · 2 de 2</span>
+    <h2>La API distingue negocio de infraestructura</h2>
+    <div class="status-grid">
+      <div class="head">Resultado</div><div class="head">Significado</div><div class="head">Decisión HTTP</div>
+      <div class="s200">FOUND</div><div>El médico existe en PostgreSQL.</div><div><span class="s200">200/201</span> · guardar en MongoDB.</div>
+      <div class="s400">NOT_FOUND</div><div>El consumidor respondió correctamente, pero el médico no existe.</div><div><span class="s400">400</span> · corregir doctorId.</div>
+      <div class="s503">UNAVAILABLE</div><div>Broker inaccesible, timeout o respuesta inesperada.</div><div><span class="s503">503</span> · reintentar después; no guardar.</div>
+    </div>
+    <div class="callout"><p><strong>NOT_FOUND no es una caída.</strong> Es una respuesta válida del dominio. Mezclarla con UNAVAILABLE ocultaría problemas operativos y confundiría al cliente.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Aplicación · 1 de 2</span>
+    <h2>Crear una historia: extremo a extremo</h2>
+    <pre class="diagram">Cliente          Gateway          Historias       RabbitMQ         Médicos       PostgreSQL / MongoDB
+  │ POST /histories │                 │               │                │                    │
+  ├────────────────►├────────────────►│ publica ID     │                │                    │
+  │                 │                 ├──────────────►│ entrega        │                    │
+  │                 │                 │               ├───────────────►├──── exists(id) ───►│
+  │                 │                 │               │◄───────────────┤◄── true / false ───┤
+  │                 │                 │◄── reply ─────┤                │                    │
+  │                 │                 │ FOUND ───────────────────────────── save(history) ─►│
+  │◄──── 201 ───────┤◄────────────────┤               │                │                    │</pre>
+    <div class="callout"><p>La escritura ocurre <strong>después</strong> de la validación. Si falta confirmación, no queda una historia huérfana en MongoDB.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Aplicación · 2 de 2</span>
+    <h2>OpenFeign antes, RabbitMQ ahora</h2>
+    <table class="table">
+      <thead><tr><th>Aspecto</th><th>HTTP / OpenFeign</th><th>AMQP / RabbitMQ</th></tr></thead>
+      <tbody>
+        <tr><td>Destino</td><td>Servicio + verbo + ruta</td><td>Exchange + routing key</td></tr>
+        <tr><td>Descubrimiento</td><td>Eureka y LoadBalancer</td><td>Binding y cola</td></tr>
+        <tr><td>Picos</td><td>Cada conexión espera</td><td>La cola amortigua dentro del TTL</td></tr>
+        <tr><td>Escalado</td><td>Una instancia elegida por balanceo</td><td>Consumidores competidores</td></tr>
+        <tr><td>Fallo</td><td>Circuit breaker y fallback</td><td>Reply timeout, TTL y 503</td></tr>
+        <tr><td>Temporalidad aquí</td><td>Síncrona</td><td>Sigue siendo síncrona: RPC sobre mensajes</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Los circuit breakers permanecen en el Gateway para las rutas HTTP. No son el mecanismo de resiliencia de esta interacción AMQP.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Demostración</span>
+    <h2>Cómo verlo funcionando</h2>
+    <div class="cards two">
+      <div class="card"><h3>1 · Levantar</h3><p><span class="code">docker compose up --build --wait</span></p><p>Panel: <span class="code">localhost:15672</span><br>Credenciales: hospital / hospital</p></div>
+      <div class="card"><h3>2 · Observar</h3><p>Abrir Queues → <span class="code">doctor.validation</span>. Ver consumidores y tasas de mensajes.</p></div>
+    </div>
+    <pre><code class="language-bash" data-trim>docker compose stop doctor-service
+
+curl -i -X POST http://localhost:8080/api/histories \
+  -H 'Content-Type: application/json' \
+  -d '{"clientId":"1","doctorId":1,"diagnosis":"Control","notes":"Demo"}'
+# Después de 3 s: HTTP 503
+
+docker compose start doctor-service
+# La siguiente validación vuelve a responder.</code></pre>
+    <p class="note">Mientras Médicos está detenido, las rutas sanas —por ejemplo Clientes— continúan disponibles.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Cierre</span>
+    <h2>Qué logramos y qué sigue</h2>
+    <div class="cards">
+      <div class="card"><div class="number">✓</div><h3>Desacoplamiento</h3><p>Historias dejó de conocer la API HTTP y las instancias de Médicos.</p></div>
+      <div class="card"><div class="number">✓</div><h3>Fallo seguro</h3><p>Timeout, TTL y estados distintos impiden guardar sin validación.</p></div>
+      <div class="card"><div class="number">→</div><h3>Evolución</h3><p>Un flujo realmente asíncrono podría responder 202 y completar después con consistencia eventual.</p></div>
+    </div>
+    <div class="callout"><p><span class="accent">Idea final:</span> RabbitMQ cambió el transporte y el acoplamiento espacial. La necesidad de una respuesta inmediata mantiene este caso como RPC.</p></div>
+    <p class="muted" style="font-size:.52em;text-align:center">Flechas: navegar · Esc: vista general · S: notas · F: pantalla completa<br><a href="index.html" style="color:#ffb25b">← Volver a la presentación general</a></p>
+  </section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/search.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash:true,slideNumber:'c/t',transition:'fade',backgroundTransition:'fade',center:true,
+    width:1280,height:720,margin:.06,minScale:.2,maxScale:1.6,
+    plugins:[RevealHighlight,RevealNotes,RevealZoom,RevealSearch]
+  });
+</script>
+</body>
+</html>
