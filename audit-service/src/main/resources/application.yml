@@ -1,0 +1,39 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: audit-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      # La vista es local y en memoria: cada instancia usa un grupo propio para
+      # reconstruirla desde el inicio después de reiniciarse.
+      group-id: ${AUDIT_GROUP_ID:audit-service-${random.uuid}}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        "[spring.json.use.type.headers]": false
+        "[spring.json.value.default.type]": com.hospital.audit.event.DomainEvent
+        "[spring.json.trusted.packages]": com.hospital.audit.event
+    listener:
+      ack-mode: record
+
+hospital:
+  kafka:
+    topic: hospital.events
+  audit:
+    max-events: 1000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

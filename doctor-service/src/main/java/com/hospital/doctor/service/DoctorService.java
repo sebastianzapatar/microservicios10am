@@ -1,6 +1,7 @@
 package com.hospital.doctor.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.hospital.doctor.dto.DoctorRequest;
 import com.hospital.doctor.dto.DoctorResponse;
+import com.hospital.doctor.event.DomainEventPublisher;
 import com.hospital.doctor.mapper.DoctorMapper;
 import com.hospital.doctor.model.Doctor;
 import com.hospital.doctor.repository.DoctorRepository;
@@ -34,11 +36,14 @@ public class DoctorService {
 
   private final DoctorRepository repository;
   private final DoctorMapper mapper;
+  private final DomainEventPublisher events;
 
   /** Inyección por constructor: las dependencias quedan explícitas y son finales. */
-  public DoctorService(DoctorRepository repository, DoctorMapper mapper) {
+  public DoctorService(
+      DoctorRepository repository, DoctorMapper mapper, DomainEventPublisher events) {
     this.repository = repository;
     this.mapper = mapper;
+    this.events = events;
   }
 
   // --- Lectura --------------------------------------------------------------
@@ -66,7 +71,11 @@ public class DoctorService {
 
     Doctor nuevo = mapper.toEntity(request);
 
-    return mapper.toResponse(repository.save(nuevo));
+    Doctor guardado = repository.save(nuevo);
+    events.publish(
+        "doctor.created", guardado.getId(),
+        Map.of("id", guardado.getId(), "name", guardado.getName()));
+    return mapper.toResponse(guardado);
   }
 
   /**
@@ -82,7 +91,11 @@ public class DoctorService {
 
     mapper.applyTo(request, almacenado);
 
-    return mapper.toResponse(repository.save(almacenado));
+    Doctor guardado = repository.save(almacenado);
+    events.publish(
+        "doctor.updated", guardado.getId(),
+        Map.of("id", guardado.getId(), "name", guardado.getName()));
+    return mapper.toResponse(guardado);
   }
 
   // --- Interno --------------------------------------------------------------

@@ -14,4 +14,7 @@ dependencies {
     // Circuit Breaker para envolver las llamadas Feign y activar el fallback.
     // Aquí la variante NO reactiva, porque este servicio es Spring MVC.
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+
+    // Publica la creación y actualización de historias clínicas en Kafka.
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
 }

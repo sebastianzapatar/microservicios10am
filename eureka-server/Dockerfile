@@ -11,6 +11,7 @@ COPY eureka-server/build.gradle eureka-server/
 COPY api-gateway/build.gradle api-gateway/
 COPY doctor-service/build.gradle doctor-service/
 COPY clinical-history-service/build.gradle clinical-history-service/
+COPY audit-service/build.gradle audit-service/
 RUN --mount=type=cache,target=/home/gradle/.gradle,id=gradle-eureka-server \
     gradle :eureka-server:dependencies --configuration runtimeClasspath --no-daemon -q
 

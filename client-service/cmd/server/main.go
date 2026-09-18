@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"hospital/client-service/internal/handler"
+	"hospital/client-service/internal/messaging"
 	"hospital/client-service/internal/model"
 	"hospital/client-service/internal/repository"
 )
@@ -46,11 +47,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// 3. Anunciarse en Eureka en segundo plano. Va en una goroutine porque el
+	// 3. Abrir el productor de Kafka. Compose espera a que el broker esté sano,
+	//    pero el reintento permite recuperarse también fuera de Compose.
+	events, err := messaging.Open(os.Getenv("KAFKA_BOOTSTRAP_SERVERS"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer events.Close()
+
+	// 4. Anunciarse en Eureka en segundo plano. Va en una goroutine porque el
 	//    registro reintenta y luego manda heartbeats para siempre: si se hiciera
 	//    aquí en línea, la API nunca llegaría a levantarse.
 	go repository.RegisterWithEureka(os.Getenv("EUREKA_URL"), serviceName, servicePort)
 
-	// 4. Servir la API. Esta llamada bloquea y mantiene vivo el proceso.
-	handler.New(db).Run(fmt.Sprintf(":%d", servicePort))
+	// 5. Servir la API. Esta llamada bloquea y mantiene vivo el proceso.
+	handler.New(db, events).Run(fmt.Sprintf(":%d", servicePort))
 }

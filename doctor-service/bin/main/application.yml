@@ -23,6 +23,20 @@ spring:
       # proyecto de clase; en producción se usarían migraciones (Flyway/Liquibase).
       ddl-auto: update
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      acks: all
+      properties:
+        "[enable.idempotence]": true
+        "[spring.json.add.type.headers]": false
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+
+hospital:
+  kafka:
+    topic: hospital.events
+
 eureka:
   client:
     service-url:

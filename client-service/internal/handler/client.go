@@ -2,20 +2,27 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"hospital/client-service/internal/messaging"
 	"hospital/client-service/internal/model"
 )
 
 // Server agrupa las dependencias de los handlers. Equivale a inyectar el
 // repositorio por constructor en los servicios Spring.
-type Server struct{ db *gorm.DB }
+type Server struct {
+	db     *gorm.DB
+	events *messaging.Publisher
+}
 
 // New crea el servidor con la conexión a la base ya abierta.
-func New(db *gorm.DB) *Server { return &Server{db: db} }
+func New(db *gorm.DB, events *messaging.Publisher) *Server {
+	return &Server{db: db, events: events}
+}
 
 // Run registra las rutas y se queda escuchando en la dirección indicada.
 //
@@ -65,6 +72,14 @@ func (s *Server) create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "name is required"})
 		return
 	}
-	s.db.Create(&client)
+	if err := s.db.Create(&client).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not create client"})
+		return
+	}
+	if err := s.events.PublishClientCreated(client.ID, client.Name); err != nil {
+		// El cliente ya está confirmado en MySQL. No se presenta como fallida una
+		// operación irreversible; el error queda visible para operación.
+		log.Printf("kafka: %v", err)
+	}
 	c.JSON(http.StatusCreated, client)
 }

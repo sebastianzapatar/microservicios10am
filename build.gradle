@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Build raíz: configuración común a los cuatro módulos Java.
+// Build raíz: configuración común a los cinco módulos Java.
 // El servicio de clientes no está aquí porque es Go y se construye con su
 // propio Dockerfile.
 // ---------------------------------------------------------------------------

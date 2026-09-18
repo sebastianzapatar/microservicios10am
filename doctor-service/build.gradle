@@ -11,6 +11,9 @@ dependencies {
 
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
+    // Publica los cambios de médicos como eventos de dominio en Kafka.
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+
     // runtimeOnly: el driver JDBC solo se necesita al ejecutar, nunca se importa
     // desde el código, así que no tiene por qué estar en el classpath de compilación.
     runtimeOnly 'org.postgresql:postgresql'

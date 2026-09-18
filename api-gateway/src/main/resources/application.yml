@@ -35,6 +35,14 @@ spring:
                   args:
                     name: clientGateway
                     fallbackUri: forward:/fallback/clients
+            - id: events
+              uri: lb://audit-service
+              predicates: [ Path=/api/events/** ]
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: auditGateway
+                    fallbackUri: forward:/fallback/events
 eureka:
   client:
     service-url:
@@ -66,3 +74,4 @@ resilience4j:
       doctorGateway: { baseConfig: default }
       historyGateway: { baseConfig: default }
       clientGateway: { baseConfig: default }
+      auditGateway: { baseConfig: default }

@@ -1,6 +1,6 @@
 # Microservicios de hospital
 
-Solución con descubrimiento de servicios Eureka y comunicación HTTP. El gateway resuelve `lb://nombre-servicio` mediante Eureka y aplica Circuit Breaker (Resilience4j) a cada ruta. Historia clínica también llama por HTTP al servicio de médicos mediante OpenFeign, con fallback/circuit breaker.
+Solución con descubrimiento de servicios Eureka, APIs HTTP y eventos asíncronos en Apache Kafka. El gateway resuelve `lb://nombre-servicio` mediante Eureka y aplica Circuit Breaker (Resilience4j) a cada ruta. Historia clínica también llama por HTTP al servicio de médicos mediante OpenFeign, mientras los tres dominios publican sus cambios en `hospital.events` y `audit-service` los consume.
 
 ## Stack
 
@@ -12,6 +12,7 @@ Solución con descubrimiento de servicios Eureka y comunicación HTTP. El gatewa
 | Gradle | 9.7.1 |
 | Go | 1.26 · Gin 1.12.0 · GORM 1.31.2 |
 | Bases de datos | PostgreSQL 18 · MongoDB 8.0 · MySQL 8.4 |
+| Eventos | Apache Kafka 4.1 (KRaft, sin ZooKeeper) |
 
 ## Ejecutar
 
@@ -23,7 +24,7 @@ docker compose up --build --wait
 
 El proyecto Compose se llama `hospital-microservices` (fijado con `name:` en `compose.yaml`, no depende del nombre de la carpeta). Eureka queda disponible en `http://localhost:8762` y toda la API entra por `http://localhost:8080`. Internamente los servicios siguen usando su puerto estándar `8761`.
 
-`--wait` bloquea hasta que los ocho contenedores estén *healthy*: los tres motores de datos, Eureka, los tres servicios y el gateway. Sin esperar, las primeras llamadas pueden responder `503` mientras el gateway todavía no recibe el registro de Eureka.
+`--wait` bloquea hasta que los diez contenedores estén *healthy*: Kafka, los tres motores de datos, Eureka, los tres servicios de dominio, auditoría y el gateway. Sin esperar, las primeras llamadas pueden responder `503` mientras el gateway todavía no recibe el registro de Eureka.
 
 Para apagar todo conservando los datos: `docker compose down`. Para borrarlos también: `docker compose down -v`.
 
@@ -34,6 +35,19 @@ Para apagar todo conservando los datos: `docker compose down`. Para borrarlos ta
 | Médicos | `/api/doctors` | PostgreSQL |
 | Historias | `/api/histories` | MongoDB |
 | Clientes | `/api/clients` | MySQL |
+| Eventos de auditoría | `/api/events` | Vista en memoria alimentada por Kafka |
+
+### Eventos Kafka
+
+Cada escritura publica un evento JSON con `eventId`, `eventType`, `aggregateId`, `occurredAt` y `payload`. La clave (`doctor:1`, `client:1`, `history:<id>`) mantiene ordenados los cambios de una misma entidad dentro de una partición.
+
+| Operación | Evento |
+|---|---|
+| Crear/editar médico | `doctor.created` / `doctor.updated` |
+| Crear paciente | `client.created` |
+| Crear/editar historia | `clinical-history.created` / `clinical-history.updated` |
+
+`GET /api/events` devuelve los más recientes primero. Se puede filtrar, por ejemplo, con `GET /api/events?eventType=client.created`, o consultar uno con `GET /api/events/{eventId}`. El consumidor deduplica por `eventId` y conserva los últimos 1000 eventos. Como la vista es local y en memoria, cada instancia usa un grupo de consumo propio y la reconstruye desde Kafka al reiniciarse.
 
 ### Médicos
 
@@ -94,6 +108,7 @@ curl -X POST http://localhost:8080/api/doctors -H 'Content-Type: application/jso
 curl -X POST http://localhost:8080/api/clients -H 'Content-Type: application/json' -d '{"name":"Carlos Ruiz"}'
 curl -X POST http://localhost:8080/api/histories -H 'Content-Type: application/json' -d '{"clientId":"1","doctorId":1,"diagnosis":"Control general","notes":"Sin novedades"}'
 curl http://localhost:8080/api/histories/client/1
+curl http://localhost:8080/api/events
 ```
 
 Para editar después, con el id que devolvió cada `POST`:
@@ -122,4 +137,4 @@ El circuito pasa a `HALF_OPEN` solo tras `waitDurationInOpenState` (10 s) y vuel
 
 ## Presentación
 
-`presentacion/index.html` es un deck de reveal.js; se abre directamente en el navegador, sin servidor.
+`presentacion/index.html` es el deck general de reveal.js; se abre directamente en el navegador, sin servidor. Desde su portada se puede entrar a `presentacion/kafka.html`, la presentación específica de la integración Kafka, o al material de RabbitMQ.

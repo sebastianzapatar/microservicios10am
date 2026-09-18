@@ -1,6 +1,8 @@
 package com.hospital.clinical.service;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -12,6 +14,7 @@ import com.hospital.clinical.client.DoctorResponse;
 import com.hospital.clinical.dto.ClinicalHistoryRequest;
 import com.hospital.clinical.dto.ClinicalHistoryResponse;
 import com.hospital.clinical.dto.ClinicalHistoryUpdateRequest;
+import com.hospital.clinical.event.DomainEventPublisher;
 import com.hospital.clinical.mapper.ClinicalHistoryMapper;
 import com.hospital.clinical.model.ClinicalHistory;
 import com.hospital.clinical.repository.ClinicalHistoryRepository;
@@ -41,15 +44,18 @@ public class ClinicalHistoryService {
 
   /** Puerta de salida hacia doctor-service (paquete {@code client}). */
   private final DoctorClient doctors;
+  private final DomainEventPublisher events;
 
   /** Inyección por constructor: las dependencias quedan explícitas y son finales. */
   public ClinicalHistoryService(
       ClinicalHistoryRepository repository,
       ClinicalHistoryMapper mapper,
-      DoctorClient doctors) {
+      DoctorClient doctors,
+      DomainEventPublisher events) {
     this.repository = repository;
     this.mapper = mapper;
     this.doctors = doctors;
+    this.events = events;
   }
 
   // --- Escritura ------------------------------------------------------------
@@ -65,7 +71,9 @@ public class ClinicalHistoryService {
 
     ClinicalHistory nueva = mapper.toEntity(request);
 
-    return mapper.toResponse(repository.save(nueva));
+    ClinicalHistory guardada = repository.save(nueva);
+    publish("clinical-history.created", guardada);
+    return mapper.toResponse(guardada);
   }
 
   /**
@@ -84,7 +92,9 @@ public class ClinicalHistoryService {
 
     mapper.applyTo(request, almacenada);
 
-    return mapper.toResponse(repository.save(almacenada));
+    ClinicalHistory guardada = repository.save(almacenada);
+    publish("clinical-history.updated", guardada);
+    return mapper.toResponse(guardada);
   }
 
   // --- Lectura --------------------------------------------------------------
@@ -150,5 +160,18 @@ public class ClinicalHistoryService {
           HttpStatus.SERVICE_UNAVAILABLE,
           "doctor-service no está disponible: no se puede validar el médico " + doctorId);
     }
+  }
+
+  private void publish(String type, ClinicalHistory history) {
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("id", history.getId());
+    payload.put("clientId", history.getClientId());
+    payload.put("doctorId", history.getDoctorId());
+    payload.put("diagnosis", history.getDiagnosis());
+    payload.put("notes", history.getNotes());
+    events.publish(
+        type,
+        history.getId(),
+        payload);
   }
 }
