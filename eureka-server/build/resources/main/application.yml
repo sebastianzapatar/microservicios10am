@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# eureka-server · registro de servicios
+# ---------------------------------------------------------------------------
+server:
+  # Puerto estándar de Eureka. Compose lo publica al host como 8762 para no
+  # chocar con otros servicios que ya usen el 8761 en la máquina.
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  client:
+    # Eureka es el registro, no un cliente suyo: no se registra a sí mismo ni
+    # descarga el registro de nadie. Sin estas dos líneas intentaría buscar otro
+    # servidor Eureka al arrancar y llenaría el log de errores de conexión.
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

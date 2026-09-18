@@ -1,0 +1,17 @@
+plugins { id 'org.springframework.boot' }
+
+dependencies {
+    // API REST con Spring MVC (pila servlet + Tomcat embebido).
+    // En Spring Boot 4 'spring-boot-starter-web' quedó deprecado a favor de este
+    // nombre, que dice explícitamente qué pila web se está usando.
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+    // JPA + Hibernate: mapea la entidad Doctor a la tabla doctors.
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // runtimeOnly: el driver JDBC solo se necesita al ejecutar, nunca se importa
+    // desde el código, así que no tiene por qué estar en el classpath de compilación.
+    runtimeOnly 'org.postgresql:postgresql'
+}

@@ -1,0 +1,134 @@
+# Plataforma local completa: 3 motores de datos + Eureka + 3 servicios + gateway.
+# Único punto de entrada publicado al host: api-gateway (8080). Eureka se publica
+# en 8762 solo para poder inspeccionar el registro desde el navegador.
+
+name: hospital-microservices
+
+x-service-healthcheck: &service-healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 60s
+
+services:
+  # ----------------------------------------------------------------- datos --
+  mongo:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_DATABASE: clinicaldb
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: doctordb
+      POSTGRES_USER: hospital
+      POSTGRES_PASSWORD: hospital
+    # PostgreSQL 18+ guarda los datos en subdirectorios por versión mayor:
+    # el volumen debe montarse en /var/lib/postgresql, no en .../data.
+    volumes: [postgres-data:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hospital -d doctordb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: clientdb
+      MYSQL_USER: hospital
+      MYSQL_PASSWORD: hospital
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    restart: unless-stopped
+
+  # ------------------------------------------------------- descubrimiento --
+  eureka-server:
+    build: { context: ., dockerfile: eureka-server/Dockerfile }
+    ports: ["8762:8761"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8761/actuator/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  # -------------------------------------------------------------- dominio --
+  doctor-service:
+    build: { context: ., dockerfile: doctor-service/Dockerfile }
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/doctordb
+      POSTGRES_USER: hospital
+      POSTGRES_PASSWORD: hospital
+    depends_on:
+      postgres: { condition: service_healthy }
+      eureka-server: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  clinical-history-service:
+    build: { context: ., dockerfile: clinical-history-service/Dockerfile }
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      MONGO_URI: mongodb://mongo:27017/clinicaldb
+    depends_on:
+      mongo: { condition: service_healthy }
+      eureka-server: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+  client-service:
+    build: { context: ./client-service, dockerfile: Dockerfile }
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka
+      MYSQL_DSN: hospital:hospital@tcp(mysql:3306)/clientdb?charset=utf8mb4&parseTime=True&loc=Local
+    depends_on:
+      mysql: { condition: service_healthy }
+      eureka-server: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  # --------------------------------------------------------- punto entrada --
+  api-gateway:
+    build: { context: ., dockerfile: api-gateway/Dockerfile }
+    ports: ["8080:8080"]
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server: { condition: service_healthy }
+      doctor-service: { condition: service_healthy }
+      clinical-history-service: { condition: service_healthy }
+      client-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      <<: *service-healthcheck
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  postgres-data:
+  mysql-data:

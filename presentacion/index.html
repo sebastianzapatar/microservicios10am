@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hospital Microservicios | Presentación</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+
+  <!-- reveal.js 6.0.2 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/theme/black.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/highlight/monokai.min.css">
+
+  <style>
+    :root{
+      --r-background-color:#071f3d;
+      --r-main-font:Inter,system-ui,sans-serif;
+      --r-main-font-size:28px;
+      --r-main-color:#eef7ff;
+      --r-heading-font:Inter,system-ui,sans-serif;
+      --r-heading-color:#5ee0ff;
+      --r-heading-text-transform:none;
+      --r-code-font:'JetBrains Mono',ui-monospace,monospace;
+      /* Los diagramas usan la monoespaciada del sistema: JetBrains Mono no trae
+         glifos de dibujo de caja y el respaldo desalinea las líneas. */
+      --r-diagram-font:ui-monospace,SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono',monospace;
+      --accent:#ffd60a; --cyan:#5ee0ff; --green:#7ee787; --red:#ff7b72;
+      --muted:#a7c7e7; --panel:rgba(255,255,255,.08); --line:rgba(255,255,255,.16);
+    }
+    body{background:radial-gradient(circle at 20% 10%,#0f4c81 0,#071f3d 38%,#031426 100%)}
+
+    .reveal h1,.reveal h2,.reveal h3{font-weight:800;letter-spacing:-.035em;text-shadow:0 6px 25px #0006}
+    .reveal h1{font-size:2.25em}
+    .reveal h2{font-size:1.6em;margin-bottom:.35em}
+    .reveal h3,.card h4{color:#bff5ff}
+    .reveal p,.reveal li{color:#eef7ff;line-height:1.3}
+    .reveal section{text-align:left}
+    .reveal section.center-slide{text-align:center}
+
+    /* Etiqueta de sección: ubica cada lámina dentro del recorrido */
+    .eyebrow{display:block;font-size:.42em;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--accent);opacity:.85;margin-bottom:.5em}
+
+    .subtitle{font-size:.82em;color:#d8f3ff;margin-top:-12px}
+    .tag{display:inline-block;background:#ffd60a24;border:1px solid #ffd60a73;border-radius:999px;
+      padding:10px 18px;font-size:.55em;font-weight:700}
+    /* .reveal p/li fijan color, así que estos modificadores necesitan igual especificidad. */
+    .reveal .highlight{color:var(--accent);font-weight:800}
+    .reveal .muted{color:var(--muted)}
+    .reveal .ok{color:var(--green);font-weight:800}
+    .reveal .warn{color:var(--red);font-weight:700}
+
+    .box,.card{background:var(--panel);border:1px solid var(--line);box-shadow:0 14px 38px #00000038}
+    .box{border-left:7px solid var(--cyan);border-radius:0 18px 18px 0;padding:16px 22px;margin:16px 0}
+    .box p{font-size:.68em;margin:0}
+    .box p + p{margin-top:.5em}
+
+    .grid-2,.grid-3{display:grid;gap:16px;align-items:stretch}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    .card{border-radius:20px;padding:16px 18px}
+    .card h4{margin:0 0 8px;font-size:.78em}
+    .card p,.card li{font-size:.6em;margin:.35em 0}
+    .card ul{margin:0;padding-left:1.1em}
+    .num{font-size:1.3em;color:var(--accent);font-weight:800;line-height:1}
+
+    .flow{display:flex;align-items:center;justify-content:center;gap:9px;margin:18px 0;flex-wrap:wrap}
+    .step{background:#5ee0ff21;border:1px solid #5ee0ff59;border-radius:16px;padding:12px 14px;
+      font-size:.54em;font-weight:700;min-width:92px;text-align:center}
+    .step.bad{background:#ff7b7221;border-color:#ff7b7259}
+    .step.good{background:#7ee78721;border-color:#7ee78759}
+    .arrow{color:var(--accent);font-size:1.1em}
+
+    .diagram{font-family:var(--r-diagram-font);font-size:.46em;line-height:1.4;background:#031426b8;
+      border:1px solid #5ee0ff50;border-radius:18px;padding:16px;white-space:pre;color:#dff8ff;
+      overflow-x:auto;text-align:left;width:fit-content;max-width:100%;margin-inline:auto}
+
+    .table{width:100%;border-collapse:collapse;font-size:.5em;background:#ffffff0d}
+    .table th,.table td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+    .table th{background:#5ee0ff33;color:#c4f7ff}
+    .table td:first-child{color:var(--accent);font-weight:700;white-space:nowrap}
+    .table.libs{font-size:.42em} .table.libs td{padding:9px 10px;line-height:1.8}
+    /* Cada coordenada se mantiene entera; la fila salta entre dependencias. */
+    .table.libs .endpoint{font-size:.95em;padding:2px 5px;white-space:nowrap}
+    .reveal .v{color:var(--green);font-weight:700;font-size:.9em}
+    .table.plain td:first-child{color:inherit;font-weight:400;white-space:normal}
+
+    .compact li{font-size:.62em;margin:5px 0}
+    .endpoint{font-family:var(--r-code-font);color:#fff;background:#ffffff18;border-radius:6px;
+      padding:2px 6px;font-size:.82em}
+    .reveal pre{width:100%;box-shadow:0 15px 45px #0008;border-radius:16px;margin:12px 0}
+    .reveal pre code{font-family:var(--r-code-font);font-size:.7em;line-height:1.4;border-radius:16px;
+      padding:18px 20px;max-height:460px}
+    .note{font-size:.5em!important;color:var(--muted)!important;margin-top:10px!important}
+
+    /* Diagrama de arquitectura (SVG) */
+    .archsvg{width:100%;height:auto;display:block;margin:4px 0 2px}
+    .archsvg text{font-family:Inter,system-ui,sans-serif;fill:#eef7ff}
+    .archsvg .t{font-size:19px;font-weight:700}
+    .archsvg .ts{font-size:16px;font-weight:700}
+    .archsvg .p{font-family:var(--r-diagram-font);font-size:17px;font-weight:600;fill:#bff5ff}
+    .archsvg .s{font-size:13px;fill:#a7c7e7}
+    .archsvg .e{font-size:13px;font-weight:600;fill:#ffd60a}
+    .archsvg .es{font-family:var(--r-diagram-font);font-size:12px;fill:#e0c257}
+    .archsvg .b{font-size:14px;fill:#8fb3d9;letter-spacing:.06em}
+    .legend{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;font-size:.44em;color:var(--muted);margin-top:2px}
+    .legend span{display:inline-flex;align-items:center;gap:8px}
+    .legend i{width:26px;height:0;border-top:3px solid currentColor;display:inline-block}
+    .legend .lg-c{color:var(--cyan)} .legend .lg-g{color:var(--accent)} .legend .lg-v{color:var(--green)}
+
+    .reveal .slide-number{background:#0314269e;font-size:.5em}
+
+    @media (max-width:700px){
+      .grid-2,.grid-3{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+  <!-- ════════════════════════════ PORTADA ════════════════════════════ -->
+  <section class="center-slide">
+    <div style="font-size:3.6em">🏥</div>
+    <h1>Hospital<br>Microservicios</h1>
+    <p class="subtitle">Arquitectura distribuida para médicos, clientes e historias clínicas</p>
+    <span class="tag">Spring Boot 4 · Eureka · API Gateway · Go · Docker Compose</span>
+    <aside class="notes">Presentar el objetivo: un sistema hospitalario dividido en servicios independientes que se descubren entre sí y toleran fallos.</aside>
+  </section>
+
+  <section>
+    <span class="eyebrow">Recorrido</span>
+    <h2>Qué vamos a ver</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4>1 · Arquitectura</h4>
+        <ul>
+          <li>Propósito y decisiones de diseño</li>
+          <li>Vista general y componentes</li>
+          <li>Gateway, Eureka y persistencia</li>
+          <li>Comunicación y resiliencia</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>2 · Flujos</h4>
+        <ul>
+          <li>Crear una historia clínica</li>
+          <li>Qué pasa cuando algo se cae</li>
+        </ul>
+        <h4 style="margin-top:14px">3 · Plataforma y stack</h4>
+        <ul>
+          <li>Docker Compose y Dockerfiles</li>
+          <li>Librerías de cada servicio</li>
+          <li>Demostración en vivo</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════ ARQUITECTURA ══════════════════════════ -->
+  <section>
+    <span class="eyebrow">Arquitectura · 1 de 7</span>
+    <h2>Propósito del proyecto</h2>
+    <div class="box"><p>Separar los dominios principales del hospital en servicios independientes, con <span class="highlight">datos aislados</span>, descubrimiento dinámico y un único punto de entrada para los consumidores.</p></div>
+    <div class="grid-3">
+      <div class="card"><div class="num">01</div><h4>Atención clínica</h4><p>Historias clínicas vinculadas a un paciente y validadas contra un médico existente.</p></div>
+      <div class="card"><div class="num">02</div><h4>Operación desacoplada</h4><p>Cada dominio evoluciona, se despliega y persiste sus datos sin compartir base de datos.</p></div>
+      <div class="card"><div class="num">03</div><h4>Tolerancia a fallos</h4><p>Los circuit breakers evitan que la caída de un servicio se propague a toda la API.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura · 2 de 7</span>
+    <h2>Vista general: cómo se conecta</h2>
+    <svg class="archsvg" viewBox="0 0 1200 520" role="img"
+         aria-label="Arquitectura: el usuario entra por el API Gateway en el puerto 8080; el gateway enruta a doctor-service 8081, clinical-history-service 8082 y client-service 8083, que persisten en PostgreSQL 5432, MongoDB 27017 y MySQL 3306; los cuatro componentes Spring y el servicio Go se registran en Eureka 8761, publicado en el host como 8762.">
+      <defs>
+        <marker id="ar-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#5ee0ff"/></marker>
+        <marker id="ar-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#ffd60a"/></marker>
+        <marker id="ar-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7ee787"/></marker>
+      </defs>
+
+      <!-- frontera de la red de Docker Compose -->
+      <rect x="200" y="10" width="990" height="500" rx="20" fill="rgba(255,255,255,.03)"
+            stroke="rgba(255,255,255,.22)" stroke-width="2" stroke-dasharray="10 8"/>
+      <text class="b" x="1174" y="32" text-anchor="end">red privada de Docker Compose</text>
+
+      <!-- usuario -->
+      <rect x="6" y="113" width="120" height="80" rx="14" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.34)" stroke-width="2"/>
+      <text class="ts" x="66" y="147" text-anchor="middle">Usuario /</text>
+      <text class="ts" x="66" y="172" text-anchor="middle">Frontend</text>
+      <line x1="126" y1="153" x2="190" y2="153" stroke="#5ee0ff" stroke-width="2.5" marker-end="url(#ar-cyan)"/>
+      <text class="p" x="158" y="141" text-anchor="middle">:8080</text>
+
+      <!-- api gateway -->
+      <rect x="196" y="100" width="180" height="106" rx="16" fill="rgba(94,224,255,.15)" stroke="#5ee0ff" stroke-width="2.5"/>
+      <text class="t" x="286" y="134" text-anchor="middle">API Gateway</text>
+      <text class="p" x="286" y="161" text-anchor="middle">:8080</text>
+      <text class="s" x="286" y="185" text-anchor="middle">único puerto público</text>
+
+      <!-- eureka -->
+      <rect x="196" y="330" width="180" height="106" rx="16" fill="rgba(255,214,10,.13)" stroke="#ffd60a" stroke-width="2.5"/>
+      <text class="t" x="286" y="364" text-anchor="middle">Eureka Server</text>
+      <text class="p" x="286" y="391" text-anchor="middle">:8761</text>
+      <text class="s" x="286" y="415" text-anchor="middle">en el host → :8762</text>
+
+      <!-- el gateway también se registra -->
+      <line x1="286" y1="206" x2="286" y2="326" stroke="#ffd60a" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ar-gold)"/>
+      <text class="e" x="298" y="271">el gateway también</text>
+      <text class="e" x="298" y="288">se registra</text>
+
+      <!-- enrutamiento: gateway -> servicios -->
+      <path d="M376 153 H445 M445 59 V413 M445 59 H514 M445 236 H514 M445 413 H514"
+            fill="none" stroke="#5ee0ff" stroke-width="2.5"/>
+      <path d="M500 59 H514 M500 236 H514 M500 413 H514" fill="none" stroke="#5ee0ff" stroke-width="2.5" marker-end="url(#ar-cyan)"/>
+      <text class="e" x="441" y="26" text-anchor="end">enruta lb://nombre-servicio</text>
+
+      <!-- registro: servicios -> eureka -->
+      <path d="M376 383 H480 M480 107 V461 M480 107 H514 M480 284 H514 M480 461 H514"
+            fill="none" stroke="#ffd60a" stroke-width="2" stroke-dasharray="7 6"/>
+      <path d="M502 107 H514 M502 284 H514 M502 461 H514" fill="none" stroke="#ffd60a" stroke-width="2" marker-end="url(#ar-gold)"/>
+      <text class="e" x="476" y="502" text-anchor="end">registro + heartbeat</text>
+
+      <!-- servicios -->
+      <rect x="520" y="30" width="300" height="106" rx="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.32)" stroke-width="2"/>
+      <text class="t" x="670" y="64" text-anchor="middle">doctor-service</text>
+      <text class="p" x="670" y="91" text-anchor="middle">:8081</text>
+      <text class="s" x="670" y="115" text-anchor="middle">Spring Boot · JPA</text>
+
+      <rect x="520" y="207" width="300" height="106" rx="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.32)" stroke-width="2"/>
+      <text class="t" x="670" y="241" text-anchor="middle">clinical-history-service</text>
+      <text class="p" x="670" y="268" text-anchor="middle">:8082</text>
+      <text class="s" x="670" y="292" text-anchor="middle">Spring Boot · Mongo · OpenFeign</text>
+
+      <rect x="520" y="384" width="300" height="106" rx="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.32)" stroke-width="2"/>
+      <text class="t" x="670" y="418" text-anchor="middle">client-service</text>
+      <text class="p" x="670" y="445" text-anchor="middle">:8083</text>
+      <text class="s" x="670" y="469" text-anchor="middle">Go · Gin · GORM</text>
+
+      <!-- llamada interna OpenFeign -->
+      <line x1="670" y1="203" x2="670" y2="142" stroke="#ffd60a" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ar-gold)"/>
+      <text class="e" x="686" y="167">OpenFeign</text>
+      <text class="es" x="686" y="186">GET /api/doctors/{id}</text>
+
+      <!-- bases de datos -->
+      <line x1="820" y1="83" x2="894" y2="83" stroke="#7ee787" stroke-width="2.5" marker-end="url(#ar-green)"/>
+      <rect x="900" y="48" width="200" height="70" rx="14" fill="rgba(126,231,135,.12)" stroke="#7ee787" stroke-width="2"/>
+      <text class="ts" x="1000" y="78" text-anchor="middle">PostgreSQL 18</text>
+      <text class="p" x="1000" y="101" text-anchor="middle">:5432</text>
+
+      <line x1="820" y1="260" x2="894" y2="260" stroke="#7ee787" stroke-width="2.5" marker-end="url(#ar-green)"/>
+      <rect x="900" y="225" width="200" height="70" rx="14" fill="rgba(126,231,135,.12)" stroke="#7ee787" stroke-width="2"/>
+      <text class="ts" x="1000" y="255" text-anchor="middle">MongoDB 8.0</text>
+      <text class="p" x="1000" y="278" text-anchor="middle">:27017</text>
+
+      <line x1="820" y1="437" x2="894" y2="437" stroke="#7ee787" stroke-width="2.5" marker-end="url(#ar-green)"/>
+      <rect x="900" y="402" width="200" height="70" rx="14" fill="rgba(126,231,135,.12)" stroke="#7ee787" stroke-width="2"/>
+      <text class="ts" x="1000" y="432" text-anchor="middle">MySQL 8.4</text>
+      <text class="p" x="1000" y="455" text-anchor="middle">:3306</text>
+    </svg>
+    <div class="legend">
+      <span class="lg-c"><i></i>petición enrutada (lb://)</span>
+      <span class="lg-g"><i style="border-top-style:dashed"></i>registro y descubrimiento</span>
+      <span class="lg-v"><i></i>persistencia</span>
+    </div>
+    <p class="note">Al host solo se publican <strong>8080</strong> (API) y <strong>8762</strong> (panel de Eureka). El resto de puertos existe únicamente dentro de la red de Compose.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura · 3 de 7</span>
+    <h2>Componentes: quién es quién</h2>
+    <table class="table">
+      <thead><tr><th>Componente</th><th>Rol</th><th>Tecnología</th><th>Puerto interno</th></tr></thead>
+      <tbody>
+        <tr><td>api-gateway</td><td>Puerta de entrada, enrutamiento y circuit breaker por ruta</td><td>Spring Cloud Gateway (WebFlux)</td><td>8080</td></tr>
+        <tr><td>eureka-server</td><td>Registro y directorio de servicios</td><td>Spring Cloud Netflix Eureka</td><td>8761</td></tr>
+        <tr><td>doctor-service</td><td>Alta y consulta de médicos</td><td>Spring Boot + JPA</td><td>8081</td></tr>
+        <tr><td>clinical-history-service</td><td>Historias clínicas; valida el médico por HTTP</td><td>Spring Boot + MongoDB + OpenFeign</td><td>8082</td></tr>
+        <tr><td>client-service</td><td>Alta y consulta de pacientes</td><td>Go + Gin + GORM</td><td>8083</td></tr>
+      </tbody>
+    </table>
+    <div class="box"><p>Cinco procesos distintos, <span class="highlight">dos lenguajes</span> y tres motores de datos conviviendo detrás de una sola API.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura · 4 de 7</span>
+    <h2>El punto de entrada: API Gateway</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4>Responsabilidad</h4>
+        <ul>
+          <li>Recibe todas las solicitudes externas en <span class="endpoint">localhost:8080</span>.</li>
+          <li>Enruta por prefijo y balancea con <span class="endpoint">lb://</span> resolviendo en Eureka.</li>
+          <li>Aplica un Circuit Breaker independiente por ruta.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Rutas públicas</h4>
+        <p><span class="endpoint">/api/doctors/**</span> → doctor-service</p>
+        <p><span class="endpoint">/api/histories/**</span> → clinical-history-service</p>
+        <p><span class="endpoint">/api/clients/**</span> → client-service</p>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="step">Request</div><div class="arrow">→</div>
+      <div class="step">Gateway</div><div class="arrow">→</div>
+      <div class="step">Eureka resuelve</div><div class="arrow">→</div>
+      <div class="step">Servicio destino</div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura · 5 de 7</span>
+    <h2>Descubrimiento con Eureka</h2>
+    <div class="box"><p><strong>Eureka Server</strong> es el directorio interno. Los tres servicios y el gateway se registran al iniciar, así ningún consumidor necesita una IP fija.</p></div>
+    <div class="grid-3">
+      <div class="card"><div class="num">1</div><h4>Registro</h4><p>Cada servicio anuncia nombre, host y puerto, y renueva su presencia con <em>heartbeats</em>.</p></div>
+      <div class="card"><div class="num">2</div><h4>Consulta</h4><p>El gateway resuelve <span class="endpoint">lb://nombre</span> contra el registro que mantiene en caché.</p></div>
+      <div class="card"><div class="num">3</div><h4>Acceso</h4><p>Panel disponible desde el host en <span class="endpoint">http://localhost:8762</span>.</p></div>
+    </div>
+    <div class="box"><p><span class="highlight">client-service no es Java:</span> habla la API HTTP nativa de Eureka desde Go. Si el registro lo olvida, su heartbeat falla y <span class="ok">vuelve a registrarse solo</span>.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura · 6 de 7</span>
+    <h2>Una base de datos por servicio</h2>
+    <table class="table">
+      <thead><tr><th>Dominio</th><th>Tecnología</th><th>Puerto</th><th>Base de datos</th></tr></thead>
+      <tbody>
+        <tr><td>Médicos</td><td>Spring Boot / JPA · Hibernate 7</td><td>8081</td><td>PostgreSQL 18 · <span class="endpoint">doctordb</span></td></tr>
+        <tr><td>Historias clínicas</td><td>Spring Boot / Spring Data MongoDB</td><td>8082</td><td>MongoDB 8.0 · <span class="endpoint">clinicaldb</span></td></tr>
+        <tr><td>Clientes</td><td>Go / Gin / GORM</td><td>8083</td><td>MySQL 8.4 · <span class="endpoint">clientdb</span></td></tr>
+      </tbody>
+    </table>
+    <div class="box"><p><span class="highlight">Base de datos por servicio:</span> cada servicio posee su almacenamiento. Evita el acoplamiento de esquema y permite escoger la tecnología adecuada para cada tipo de información: relacional para médicos, documental para historias.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Arquitectura · 7 de 7</span>
+    <h2>Comunicación entre servicios</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4>Externa: Gateway → servicios</h4>
+        <p>El gateway delega la solicitud usando el nombre registrado en Eureka. El consumidor no conoce puertos internos ni contenedores.</p>
+      </div>
+      <div class="card">
+        <h4>Interna: Historias → Médicos</h4>
+        <p>clinical-history-service usa <span class="highlight">OpenFeign</span> con el nombre <span class="endpoint">doctor-service</span>. Antes de persistir consulta <span class="endpoint">GET /api/doctors/{id}</span>.</p>
+      </div>
+    </div>
+    <div class="box"><p>Es comunicación HTTP <strong>síncrona</strong>: da validación inmediata, pero crea dependencia temporal entre servicios. Por eso ese enlace lleva circuit breaker y fallback.</p></div>
+  </section>
+
+  <!-- ════════════════════════════ FLUJOS ════════════════════════════ -->
+  <section>
+    <span class="eyebrow">Flujos · 1 de 3</span>
+    <h2>Crear una historia clínica</h2>
+    <div class="flow">
+      <div class="step">1. Cliente<br>POST /histories</div><div class="arrow">→</div>
+      <div class="step">2. Gateway<br>enruta</div><div class="arrow">→</div>
+      <div class="step">3. Historias<br>recibe</div>
+    </div>
+    <div class="flow">
+      <div class="step">4. OpenFeign<br>consulta médico</div><div class="arrow">→</div>
+      <div class="step">5. doctor-service<br>valida ID</div><div class="arrow">→</div>
+      <div class="step good">6. MongoDB<br>guarda historia</div>
+    </div>
+    <pre><code class="language-bash" data-trim>POST /api/histories
+{ "clientId": "1", "doctorId": 1,
+  "diagnosis": "Control general", "notes": "Sin novedades" }</code></pre>
+    <p class="note">La historia se guarda únicamente si doctor-service confirma que el médico existe y responde.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Flujos · 2 de 3</span>
+    <h2>Resiliencia ante fallos</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4>En el Gateway</h4>
+        <p>Resilience4j vigila cada ruta: ventana de 5 llamadas, umbral de fallo del 50% y 10 s en estado abierto.</p>
+        <p class="warn">Si el destino falla, responde 503 desde <span class="endpoint">/fallback/...</span> en vez de colgar la petición.</p>
+      </div>
+      <div class="card">
+        <h4>Dentro de Historias</h4>
+        <p>OpenFeign tiene Circuit Breaker y <span class="endpoint">DoctorClientFallback</span>.</p>
+        <p class="warn">Si Médicos no responde, la creación se rechaza con 503 en lugar de registrar una historia sin validar.</p>
+      </div>
+    </div>
+    <pre class="diagram"> ┌────────┐   5 llamadas, ≥50 % fallan   ┌──────┐
+ │ CLOSED │ ────────────────────────────►│ OPEN │
+ └────────┘                              └──┬───┘
+     ▲                                      │
+     │ 2 llamadas de prueba OK  espera 10 s │
+     │                                      ▼
+     │         ┌───────────┐                │
+     └─────────┤ HALF_OPEN │◄───────────────┘
+               └───────────┘</pre>
+    <p class="note">El paso de OPEN a HALF_OPEN es automático: el circuito se recupera aunque no llegue tráfico nuevo.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Flujos · 3 de 3</span>
+    <h2>Fallo y recuperación, en vivo</h2>
+    <div class="flow">
+      <div class="step">doctor-service<br>se detiene</div><div class="arrow">→</div>
+      <div class="step bad">circuito OPEN<br>503 inmediato</div><div class="arrow">→</div>
+      <div class="step">rutas sanas<br>siguen en 200</div><div class="arrow">→</div>
+      <div class="step good">vuelve el servicio<br>circuito CLOSED</div>
+    </div>
+    <pre><code class="language-bash" data-trim>docker compose stop doctor-service
+curl http://localhost:8080/api/doctors      # 503 {"message":"doctors service is temporarily unavailable"}
+curl http://localhost:8080/api/clients      # 200 — la caída no se propaga
+curl http://localhost:8080/actuator/circuitbreakers   # doctorGateway: OPEN
+
+docker compose start doctor-service         # el circuito vuelve solo a CLOSED</code></pre>
+    <p class="note">El aislamiento es el punto clave: un servicio caído degrada su propia ruta, no la API completa.</p>
+  </section>
+
+  <!-- ══════════════════════════ PLATAFORMA ══════════════════════════ -->
+  <section>
+    <span class="eyebrow">Plataforma · 1 de 3</span>
+    <h2>Docker Compose: la plataforma local</h2>
+    <div class="grid-3">
+      <div class="card"><h4>8 contenedores</h4><p>Gateway, Eureka, tres servicios y tres motores de base de datos.</p></div>
+      <div class="card"><h4>Arranque ordenado</h4><p>Todos declaran <span class="endpoint">healthcheck</span>; cada servicio espera a que su dependencia esté <em>healthy</em>, no solo iniciada.</p></div>
+      <div class="card"><h4>Estado durable</h4><p>Volúmenes <span class="endpoint">postgres-data</span>, <span class="endpoint">mongo-data</span> y <span class="endpoint">mysql-data</span>.</p></div>
+    </div>
+    <pre><code class="language-bash" data-trim>docker compose up --build --wait
+# API:    http://localhost:8080
+# Eureka: http://localhost:8762</code></pre>
+    <p class="note">Con <span class="endpoint">--wait</span> el comando regresa solo cuando los ocho contenedores están sanos.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Plataforma · 2 de 3</span>
+    <h2>Dockerfiles multi-etapa</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4>Etapa de compilación</h4>
+        <p>Imagen con Gradle 9.7.1 + JDK 25 (o Go 1.27). Copia primero los scripts de build para que las dependencias queden en una capa reutilizable.</p>
+      </div>
+      <div class="card">
+        <h4>Etapa de ejecución</h4>
+        <p>Solo el JRE 25 (o Alpine para Go) y el <span class="endpoint">app.jar</span>. Se ejecuta con un usuario sin privilegios, no como root.</p>
+      </div>
+    </div>
+    <pre><code class="language-dockerfile" data-trim>FROM gradle:9.7.1-jdk25 AS build
+COPY settings.gradle build.gradle ./
+COPY */build.gradle ./            # capa de dependencias
+RUN gradle :doctor-service:dependencies --no-daemon -q
+COPY doctor-service/src doctor-service/src
+RUN gradle :doctor-service:bootJar --no-daemon
+
+FROM eclipse-temurin:25-jre AS runtime
+COPY --from=build .../app.jar app.jar
+USER spring
+ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-jar","/app/app.jar"]</code></pre>
+    <p class="note">La imagen final no contiene Gradle, ni el JDK completo, ni el código fuente.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Plataforma · 3 de 3</span>
+    <h2>Red, variables y puertos</h2>
+    <div class="box"><p>Compose crea una red privada con DNS interno: los servicios se llaman por nombre —<span class="endpoint">postgres</span>, <span class="endpoint">mongo</span>, <span class="endpoint">eureka-server</span>— nunca por <span class="endpoint">localhost</span>.</p></div>
+    <table class="table">
+      <thead><tr><th>Variable</th><th>Ejemplo</th><th>Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td>EUREKA_URL</td><td>http://eureka-server:8761/eureka/</td><td>Registro y descubrimiento</td></tr>
+        <tr><td>MONGO_URI</td><td>mongodb://mongo:27017/clinicaldb</td><td>Historias clínicas</td></tr>
+        <tr><td>POSTGRES_URL</td><td>jdbc:postgresql://postgres:5432/doctordb</td><td>Médicos</td></tr>
+        <tr><td>MYSQL_DSN</td><td>...@tcp(mysql:3306)/clientdb...</td><td>Clientes</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Solo se publican al host 8080 (API) y 8762 (panel de Eureka). Todo lo demás queda dentro de la red de Compose.</p>
+  </section>
+
+  <!-- ════════════════════════ STACK Y LIBRERÍAS ════════════════════════ -->
+  <section>
+    <span class="eyebrow">Stack · 1 de 6</span>
+    <h2>Plataforma Java</h2>
+    <div class="grid-3">
+      <div class="card"><h4>Spring Boot 4.0.8</h4><p>Marco base de los cuatro módulos Java: arranque, inyección de dependencias, servidor embebido y endpoints de operación. Sobre Spring Framework 7.</p></div>
+      <div class="card"><h4>Java 25</h4><p>Toolchain configurado en Gradle para compilar los cuatro módulos de forma uniforme, independiente del JDK instalado.</p></div>
+      <div class="card"><h4>Spring Cloud 2025.1.3</h4><p>BOM que alinea las versiones compatibles de Eureka, Gateway, OpenFeign y Resilience4j con Spring Boot 4.</p></div>
+    </div>
+    <pre><code class="language-groovy" data-trim>dependencyManagement {
+  imports { mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.1.3" }
+}</code></pre>
+    <p class="note">El BOM es lo que evita mezclar versiones incompatibles entre componentes distribuidos.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Stack · 2 de 6</span>
+    <h2>Librerías usadas en cada proyecto</h2>
+    <table class="table libs">
+      <thead><tr><th>Proyecto</th><th>Dependencias declaradas en su build</th></tr></thead>
+      <tbody>
+        <tr><td>eureka-server</td><td><span class="endpoint">spring-cloud-starter-netflix-eureka-server</span> <span class="v">5.0.2</span> · <span class="endpoint">spring-boot-starter-actuator</span> <span class="v">4.0.8</span></td></tr>
+        <tr><td>api-gateway</td><td><span class="endpoint">spring-cloud-starter-gateway-server-webflux</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> <span class="v">5.0.2</span> · <span class="endpoint">spring-cloud-starter-circuitbreaker-reactor-resilience4j</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
+        <tr><td>doctor-service</td><td><span class="endpoint">spring-boot-starter-webmvc</span> <span class="v">4.0.8</span> · <span class="endpoint">spring-boot-starter-data-jpa</span> (Hibernate <span class="v">7.2</span>) · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> · <span class="endpoint">org.postgresql:postgresql</span> <span class="v">42.7.13</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
+        <tr><td>clinical-history-service</td><td><span class="endpoint">spring-boot-starter-webmvc</span> · <span class="endpoint">spring-boot-starter-data-mongodb</span> (driver <span class="v">5.6.5</span>) · <span class="endpoint">spring-cloud-starter-netflix-eureka-client</span> · <span class="endpoint">spring-cloud-starter-openfeign</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-cloud-starter-circuitbreaker-resilience4j</span> <span class="v">5.0.3</span> · <span class="endpoint">spring-boot-starter-actuator</span></td></tr>
+        <tr><td>client-service <span class="muted">(Go)</span></td><td><span class="endpoint">github.com/gin-gonic/gin</span> <span class="v">1.12.0</span> · <span class="endpoint">gorm.io/gorm</span> <span class="v">1.31.2</span> · <span class="endpoint">gorm.io/driver/mysql</span> <span class="v">1.6.0</span> · <span class="endpoint">net/http</span> <span class="muted">(estándar, para Eureka)</span></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Los <em>starters</em> de Spring se declaran <strong>sin versión</strong>: la fijan los BOM de Spring Boot 4.0.8 y Spring Cloud 2025.1.3 del <span class="endpoint">build.gradle</span> raíz. <span class="endpoint">spring-boot-starter-actuator</span> se aplica a los cuatro módulos Java desde ese mismo archivo.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Stack · 3 de 6</span>
+    <h2>Librerías: gateway y descubrimiento</h2>
+    <table class="table">
+      <thead><tr><th>Módulo</th><th>Librería</th><th>Para qué</th></tr></thead>
+      <tbody>
+        <tr><td>api-gateway</td><td>spring-cloud-starter-gateway-server-webflux</td><td>Rutas reactivas, filtros y proxy de entrada de la API.</td></tr>
+        <tr><td>api-gateway</td><td>...netflix-eureka-client</td><td>Registrarse y resolver servicios por nombre con <span class="endpoint">lb://</span>.</td></tr>
+        <tr><td>api-gateway</td><td>...circuitbreaker-reactor-resilience4j</td><td>Circuit Breaker en los filtros reactivos y activación de los fallbacks.</td></tr>
+        <tr><td>eureka-server</td><td>...netflix-eureka-server</td><td>Convierte el módulo en el registro donde los demás se anuncian.</td></tr>
+        <tr><td>todos</td><td>spring-boot-starter-actuator</td><td>Expone <span class="endpoint">/actuator/health</span>, que usan los healthchecks de Compose.</td></tr>
+      </tbody>
+    </table>
+    <div class="box"><p><span class="highlight">Ojo con el nombre:</span> en Spring Cloud Gateway 5 el artefacto <span class="endpoint">spring-cloud-starter-gateway</span> dejó de existir; ahora se elige explícitamente la variante <span class="endpoint">-server-webflux</span> o <span class="endpoint">-server-webmvc</span>.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Stack · 4 de 6</span>
+    <h2>Librerías: Médicos e Historias</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h4>doctor-service</h4>
+        <p><span class="endpoint">spring-boot-starter-webmvc</span>: API REST con Spring MVC.</p>
+        <p><span class="endpoint">spring-boot-starter-data-jpa</span>: mapea la entidad Doctor con Hibernate 7.</p>
+        <p><span class="endpoint">org.postgresql:postgresql</span>: driver JDBC hacia PostgreSQL.</p>
+        <p><span class="endpoint">...eureka-client</span>: registra el servicio en Eureka.</p>
+      </div>
+      <div class="card">
+        <h4>clinical-history-service</h4>
+        <p><span class="endpoint">spring-boot-starter-webmvc</span>: expone POST y consultas REST.</p>
+        <p><span class="endpoint">spring-boot-starter-data-mongodb</span>: guarda documentos ClinicalHistory.</p>
+        <p><span class="endpoint">spring-cloud-starter-openfeign</span>: cliente HTTP declarativo hacia Médicos.</p>
+        <p><span class="endpoint">...circuitbreaker-resilience4j</span>: protege esa consulta con fallback.</p>
+      </div>
+    </div>
+    <p class="note">En Spring Boot 4, <span class="endpoint">spring-boot-starter-web</span> quedó deprecado a favor de <span class="endpoint">spring-boot-starter-webmvc</span>, que nombra explícitamente la pila servlet.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">Stack · 5 de 6</span>
+    <h2>Librerías: client-service en Go</h2>
+    <table class="table">
+      <thead><tr><th>Dependencia</th><th>Rol dentro del servicio</th></tr></thead>
+      <tbody>
+        <tr><td>github.com/gin-gonic/gin 1.12</td><td>Framework HTTP: rutas, binding de JSON, validación y respuestas REST.</td></tr>
+        <tr><td>gorm.io/gorm 1.31</td><td>ORM: modela Client y ofrece consulta, creación y migración automática.</td></tr>
+        <tr><td>gorm.io/driver/mysql 1.6</td><td>Adaptador de GORM para MySQL; abre la conexión con el DSN configurado.</td></tr>
+        <tr><td>net/http (estándar)</td><td>Registro y heartbeats contra la API nativa de Eureka, sin cliente Java.</td></tr>
+      </tbody>
+    </table>
+    <div class="box"><p>Las entradas <span class="endpoint">// indirect</span> de <span class="endpoint">go.mod</span> son dependencias transitivas que Gin o GORM necesitan internamente; el código del proyecto no las importa.</p></div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Stack · 6 de 6</span>
+    <h2>Qué cambió al migrar a Spring Boot 4</h2>
+    <table class="table plain">
+      <thead><tr><th>Antes (Boot 3)</th><th>Ahora (Boot 4)</th><th>Por qué importa</th></tr></thead>
+      <tbody>
+        <tr><td><span class="endpoint">spring.data.mongodb.uri</span></td><td><span class="endpoint">spring.mongodb.uri</span></td><td class="warn">La clave vieja se ignora en silencio: el driver se iba a localhost.</td></tr>
+        <tr><td><span class="endpoint">spring-cloud-starter-gateway</span></td><td><span class="endpoint">...-gateway-server-webflux</span></td><td>El artefacto anterior ya no se publica.</td></tr>
+        <tr><td><span class="endpoint">spring.cloud.gateway.routes</span></td><td><span class="endpoint">spring.cloud.gateway.server.webflux.routes</span></td><td>Las rutas se mueven bajo la variante de servidor.</td></tr>
+        <tr><td><span class="endpoint">spring-boot-starter-web</span></td><td><span class="endpoint">spring-boot-starter-webmvc</span></td><td>Deprecado; el nuevo nombre dice qué pila usa.</td></tr>
+      </tbody>
+    </table>
+    <div class="box"><p><span class="ok">Lección:</span> una propiedad deprecada a nivel <em>error</em> no falla el arranque, simplemente deja de aplicarse. Conviene revisar los metadatos de configuración, no solo que el proyecto compile.</p></div>
+  </section>
+
+  <!-- ══════════════════════════ CIERRE ══════════════════════════ -->
+  <section>
+    <span class="eyebrow">Cierre · 1 de 2</span>
+    <h2>Demostración sugerida</h2>
+    <ol class="compact">
+      <li>Levantar el ecosistema: <span class="endpoint">docker compose up --build --wait</span>.</li>
+      <li>Abrir Eureka y verificar los cuatro registros: gateway y tres servicios.</li>
+      <li>Crear un médico y un cliente por el gateway.</li>
+      <li>Crear una historia clínica y consultarla por <span class="endpoint">/api/histories/client/1</span>.</li>
+      <li>Detener doctor-service y repetir para evidenciar el fallback y el circuito abierto.</li>
+      <li>Volver a levantarlo y mostrar que el circuito se cierra solo.</li>
+    </ol>
+    <pre><code class="language-bash" data-trim>curl -X POST localhost:8080/api/doctors -H 'Content-Type: application/json' -d '{"name":"Dra. Ana Pérez"}'
+curl -X POST localhost:8080/api/clients -H 'Content-Type: application/json' -d '{"name":"Carlos Ruiz"}'
+curl -X POST localhost:8080/api/histories -H 'Content-Type: application/json' \
+     -d '{"clientId":"1","doctorId":1,"diagnosis":"Control general","notes":"Sin novedades"}'</code></pre>
+  </section>
+
+  <section>
+    <span class="eyebrow">Cierre · 2 de 2</span>
+    <h2>Conclusiones</h2>
+    <div class="grid-3">
+      <div class="card"><h4>Arquitectura</h4><p>Dominios independientes, bases aisladas y APIs enfocadas en una sola responsabilidad.</p></div>
+      <div class="card"><h4>Conectividad</h4><p>Eureka descubre, el Gateway centraliza y OpenFeign valida entre dominios.</p></div>
+      <div class="card"><h4>Operación</h4><p>Docker Compose reproduce el sistema completo y los circuit breakers contienen los fallos.</p></div>
+    </div>
+    <div class="box"><p><span class="ok">Resultado:</span> una base práctica para evolucionar hacia autenticación, observabilidad, mensajería asíncrona y despliegue en Kubernetes.</p></div>
+    <p class="muted" style="font-size:.55em;text-align:center">Navegación: flechas · Espacio · <strong>Esc</strong> vista general · <strong>S</strong> notas del ponente · <strong>F</strong> pantalla completa</p>
+  </section>
+
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/6.0.2/plugin/search.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'fade',
+    backgroundTransition: 'fade',
+    center: true,
+    width: 1280,
+    height: 720,
+    margin: 0.06,
+    minScale: 0.2,
+    maxScale: 1.6,
+    plugins: [RevealHighlight, RevealNotes, RevealZoom, RevealSearch]
+  });
+</script>
+</body>
+</html>

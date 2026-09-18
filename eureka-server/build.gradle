@@ -1,0 +1,7 @@
+plugins { id 'org.springframework.boot' }
+
+dependencies {
+    // Convierte el módulo en el servidor de registro. Arrastra el servidor web y
+    // el panel de Eureka; no hace falta nada más.
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+}

@@ -1,0 +1,68 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      # Spring Cloud Gateway 5.x movió las rutas bajo server.webflux.
+      server:
+        webflux:
+          routes:
+            - id: doctors
+              uri: lb://doctor-service
+              predicates: [ Path=/api/doctors/** ]
+              # Forma explícita: la abreviada solo acepta argumentos posicionales,
+              # por lo que "fallbackUri=..." se tomaba como texto literal.
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: doctorGateway
+                    fallbackUri: forward:/fallback/doctors
+            - id: histories
+              uri: lb://clinical-history-service
+              predicates: [ Path=/api/histories/** ]
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: historyGateway
+                    fallbackUri: forward:/fallback/histories
+            - id: clients
+              uri: lb://client-service
+              predicates: [ Path=/api/clients/** ]
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: clientGateway
+                    fallbackUri: forward:/fallback/clients
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,circuitbreakers,circuitbreakerevents
+  endpoint:
+    gateway:
+      access: read-only
+resilience4j:
+  timelimiter:
+    configs:
+      # Sin esto el límite por defecto es 1s, demasiado justo para un arranque en frío.
+      default: { timeoutDuration: 5s }
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 5          # se evalúan las últimas 5 llamadas
+        minimumNumberOfCalls: 5       # por defecto son 100: el circuito nunca abriría
+        failureRateThreshold: 50      # 50% de fallos -> abre
+        waitDurationInOpenState: 10s  # tiempo abierto antes de probar de nuevo
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true   # se recupera solo, sin esperar tráfico
+        registerHealthIndicator: true
+    instances:
+      doctorGateway: { baseConfig: default }
+      historyGateway: { baseConfig: default }
+      clientGateway: { baseConfig: default }

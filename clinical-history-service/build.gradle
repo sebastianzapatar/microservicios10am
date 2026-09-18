@@ -1,0 +1,17 @@
+plugins { id 'org.springframework.boot' }
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+    // Spring Data MongoDB: repositorios y mapeo de documentos.
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Cliente HTTP declarativo: genera la implementación de DoctorClient.
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // Circuit Breaker para envolver las llamadas Feign y activar el fallback.
+    // Aquí la variante NO reactiva, porque este servicio es Spring MVC.
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+}

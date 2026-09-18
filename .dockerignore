@@ -1,0 +1,8 @@
+.git
+.gradle
+.firecrawl
+**/bin
+**/build
+presentacion
+README.md
+client-service/vendor

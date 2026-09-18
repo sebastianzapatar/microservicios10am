@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# doctor-service · médicos (PostgreSQL)
+# ---------------------------------------------------------------------------
+server:
+  port: 8081
+
+spring:
+  application:
+    # Nombre con el que se registra en Eureka. Es el que usa el gateway en
+    # lb://doctor-service y el que usa OpenFeign desde historias clínicas.
+    name: doctor-service
+
+  datasource:
+    # "postgres" no es un hostname inventado: es el nombre del servicio en
+    # compose.yaml, y el DNS interno de Docker lo resuelve al contenedor.
+    url: ${POSTGRES_URL:jdbc:postgresql://postgres:5432/doctordb}
+    username: ${POSTGRES_USER:hospital}
+    password: ${POSTGRES_PASSWORD:hospital}
+
+  jpa:
+    hibernate:
+      # Hibernate crea o ajusta la tabla "doctors" al arrancar. Cómodo para un
+      # proyecto de clase; en producción se usarían migraciones (Flyway/Liquibase).
+      ddl-auto: update
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # /actuator/health lo consulta el healthcheck de Docker Compose. Incluye
+        # el estado de PostgreSQL, así que el contenedor no se marca sano hasta
+        # que la base realmente responde.
+        include: health,info

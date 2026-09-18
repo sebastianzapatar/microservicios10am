@@ -1,0 +1,41 @@
+// ---------------------------------------------------------------------------
+// Build raíz: configuración común a los cuatro módulos Java.
+// El servicio de clientes no está aquí porque es Go y se construye con su
+// propio Dockerfile.
+// ---------------------------------------------------------------------------
+
+plugins {
+    // "apply false" = se declara la versión aquí, pero el plugin solo se activa
+    // en los módulos que lo pidan en su propio build.gradle.
+    id 'org.springframework.boot' version '4.0.8' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+allprojects { group = 'com.hospital'; version = '1.0.0' }
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    // Gradle descarga este JDK si no lo encuentra, así que el build no depende
+    // de la versión de Java instalada en la máquina de cada quien.
+    java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
+
+    repositories { mavenCentral() }
+
+    // Los BOM son la razón de que las dependencias de los módulos se declaren
+    // SIN versión: aquí se fija un conjunto de versiones ya probadas entre sí.
+    // Spring Cloud 2025.1.x es el tren alineado con Spring Boot 4.0.x; el de
+    // Spring Boot lo importa solo el plugin de Boot.
+    dependencyManagement { imports { mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.1.3" } }
+
+    // Actuator en los cuatro módulos: expone /actuator/health, que es lo que
+    // usan los healthcheck de compose.yaml para ordenar el arranque.
+    dependencies { implementation 'org.springframework.boot:spring-boot-starter-actuator' }
+
+    // Nombre de artefacto fijo para que todos los Dockerfile copien "app.jar"
+    // sin depender del nombre del módulo ni de la versión.
+    plugins.withId('org.springframework.boot') { tasks.named('bootJar') { archiveFileName = 'app.jar' } }
+
+    tasks.named('test') { useJUnitPlatform() }
+}

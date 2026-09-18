@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# clinical-history-service · historias clínicas (MongoDB)
+# ---------------------------------------------------------------------------
+server:
+  port: 8082
+
+spring:
+  application:
+    # Con este nombre se registra en Eureka y con él lo busca el gateway (lb://).
+    name: clinical-history-service
+
+  mongodb:
+    # OJO: en Spring Boot 4 esta clave se movió de spring.data.mongodb.uri a
+    # spring.mongodb.uri. La anterior quedó deprecada a nivel "error": no falla
+    # el arranque, simplemente se ignora y el driver se va a localhost.
+    # El valor por defecto sirve dentro de Compose; MONGO_URI lo sobreescribe.
+    uri: ${MONGO_URI:mongodb://mongo:27017/clinicaldb}
+
+  cloud:
+    openfeign:
+      circuitbreaker:
+        # Envuelve cada llamada Feign en un Circuit Breaker, que es lo que
+        # permite que actúe DoctorClientFallback cuando doctor-service falla.
+        enabled: true
+      client:
+        config:
+          doctor-service:
+            # Un 404 no es un fallo de infraestructura: se devuelve null en vez
+            # de lanzar excepción. Así "el médico no existe" se responde 400,
+            # no 503, y consultar ids inexistentes no abre el circuito.
+            dismiss404: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # /actuator/health es el que consulta el healthcheck de Docker Compose.
+        include: health,info

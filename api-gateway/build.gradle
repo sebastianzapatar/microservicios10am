@@ -1,0 +1,16 @@
+plugins { id 'org.springframework.boot' }
+
+dependencies {
+    // Motor del gateway (rutas, predicados y filtros) sobre WebFlux.
+    // OJO: en Spring Cloud Gateway 5 el antiguo 'spring-cloud-starter-gateway'
+    // dejó de publicarse; ahora hay que elegir la variante -server-webflux
+    // (reactiva) o -server-webmvc (servlet).
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+
+    // Permite registrarse en Eureka y resolver destinos con lb://nombre-servicio.
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Circuit Breaker para los filtros reactivos. Es lo que hace que funcione el
+    // filtro CircuitBreaker y su fallbackUri en application.yml.
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+}
