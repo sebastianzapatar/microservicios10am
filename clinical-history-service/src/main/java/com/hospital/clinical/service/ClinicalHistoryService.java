@@ -1,18 +1,17 @@
 package com.hospital.clinical.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.hospital.clinical.client.DoctorClient;
-import com.hospital.clinical.client.DoctorResponse;
 import com.hospital.clinical.dto.ClinicalHistoryRequest;
 import com.hospital.clinical.dto.ClinicalHistoryResponse;
 import com.hospital.clinical.dto.ClinicalHistoryUpdateRequest;
 import com.hospital.clinical.mapper.ClinicalHistoryMapper;
+import com.hospital.clinical.messaging.DoctorValidationClient;
+import com.hospital.clinical.messaging.DoctorValidationResult;
 import com.hospital.clinical.model.ClinicalHistory;
 import com.hospital.clinical.repository.ClinicalHistoryRepository;
 
@@ -22,13 +21,13 @@ import com.hospital.clinical.repository.ClinicalHistoryRepository;
  * <p>Aquí vive la regla central del dominio: <strong>una historia clínica siempre
  * debe estar respaldada por un médico que exista</strong>. Como los médicos viven
  * en otro servicio y en otra base de datos, no se puede usar una clave foránea:
- * hay que preguntárselo a doctor-service por HTTP antes de escribir en MongoDB.
+ * hay que preguntárselo a doctor-service por RabbitMQ antes de escribir en MongoDB.
  *
  * <p>Esta clase es la frontera del servicio:
  * <ul>
  *   <li>Hacia arriba entrega DTO, nunca documentos: el modelo de MongoDB no sale de aquí.</li>
- *   <li>Hacia los lados usa {@link DoctorClient}, sin saber que por debajo hay HTTP,
- *       Eureka ni un circuit breaker.</li>
+ *   <li>Hacia los lados usa {@link DoctorValidationClient}, sin conocer exchanges,
+ *       colas, routing keys ni detalles del protocolo AMQP.</li>
  * </ul>
  *
  * <p>Decide; no sabe ni cómo se guarda ni cómo se viaja por la red.
@@ -40,13 +39,13 @@ public class ClinicalHistoryService {
   private final ClinicalHistoryMapper mapper;
 
   /** Puerta de salida hacia doctor-service (paquete {@code client}). */
-  private final DoctorClient doctors;
+  private final DoctorValidationClient doctors;
 
   /** Inyección por constructor: las dependencias quedan explícitas y son finales. */
   public ClinicalHistoryService(
       ClinicalHistoryRepository repository,
       ClinicalHistoryMapper mapper,
-      DoctorClient doctors) {
+      DoctorValidationClient doctors) {
     this.repository = repository;
     this.mapper = mapper;
     this.doctors = doctors;
@@ -121,34 +120,29 @@ public class ClinicalHistoryService {
    *
    * <p>Distingue tres situaciones, porque al cliente de la API le importan distinto:
    * <ul>
-   *   <li><b>400</b> no se envió un id de médico, o el médico no existe (el 404 de
-   *       doctor-service lo convierte en {@code null} la opción {@code dismiss404}).
+   *   <li><b>400</b> no se envió un id o doctor-service respondió {@code NOT_FOUND}.
    *       Es un error de quien llama.</li>
-   *   <li><b>503</b> doctor-service no respondió y actuó el fallback. No es culpa de
-   *       quien llama: puede reintentar más tarde.</li>
+   *   <li><b>503</b> RabbitMQ falló o se agotó el tiempo sin respuesta. No es culpa
+   *       de quien llama: puede reintentar más tarde.</li>
    * </ul>
    *
-   * <p>Separar ambos casos no es cosmética: si el 404 se tratara como fallo, consultar
-   * médicos inexistentes acabaría abriendo el circuito y dejando fuera de servicio una
-   * ruta que funciona perfectamente.
+   * <p>Separar ambos casos no es cosmética: {@code NOT_FOUND} es una respuesta válida
+   * del dominio; {@code UNAVAILABLE} señala un problema temporal de infraestructura.
    */
   private void requireExistingDoctor(Long doctorId) {
     if (doctorId == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta el campo doctorId");
     }
 
-    Optional<DoctorResponse> doctor = doctors.findById(doctorId);
+    DoctorValidationResult result = doctors.validate(doctorId);
 
-    // Optional vacío = doctor-service respondió 404: el médico no existe.
-    if (doctor.isEmpty()) {
-      throw new ResponseStatusException(
+    switch (result) {
+      case FOUND -> { /* Validación terminada: la escritura puede continuar. */ }
+      case NOT_FOUND -> throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "El médico " + doctorId + " no existe");
-    }
-    // Con contenido pero marcado UNAVAILABLE = vino del fallback, no de doctor-service.
-    if (doctor.get().isUnavailable()) {
-      throw new ResponseStatusException(
+      case UNAVAILABLE -> throw new ResponseStatusException(
           HttpStatus.SERVICE_UNAVAILABLE,
-          "doctor-service no está disponible: no se puede validar el médico " + doctorId);
+          "No fue posible validar el médico " + doctorId + " mediante RabbitMQ");
     }
   }
 }

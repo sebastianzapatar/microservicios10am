@@ -1,6 +1,6 @@
-# Plataforma local completa: 3 motores de datos + Eureka + 3 servicios + gateway.
-# Único punto de entrada publicado al host: api-gateway (8080). Eureka se publica
-# en 8762 solo para poder inspeccionar el registro desde el navegador.
+# Plataforma local completa: 3 motores de datos + RabbitMQ + Eureka + 3 servicios
+# + gateway. La API entra por 8080; Eureka y RabbitMQ Management se publican para
+# poder observar el registro y el flujo de mensajes desde el navegador.
 
 name: hospital-microservices
 
@@ -58,6 +58,25 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  # ---------------------------------------------------------- mensajería --
+  rabbitmq:
+    # La variante management incluye la interfaz web además del broker AMQP.
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: hospital
+      RABBITMQ_DEFAULT_PASS: hospital
+    ports:
+      - "5672:5672"    # AMQP (útil para herramientas locales)
+      - "15672:15672" # panel: http://localhost:15672
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
   # ------------------------------------------------------- descubrimiento --
   eureka-server:
     build: { context: ., dockerfile: eureka-server/Dockerfile }
@@ -75,8 +94,12 @@ services:
       POSTGRES_URL: jdbc:postgresql://postgres:5432/doctordb
       POSTGRES_USER: hospital
       POSTGRES_PASSWORD: hospital
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: hospital
+      RABBITMQ_PASSWORD: hospital
     depends_on:
       postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
@@ -88,9 +111,15 @@ services:
     environment:
       EUREKA_URL: http://eureka-server:8761/eureka/
       MONGO_URI: mongodb://mongo:27017/clinicaldb
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: hospital
+      RABBITMQ_PASSWORD: hospital
     depends_on:
       mongo: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
+      # Evita aceptar historias antes de que exista un consumidor de validación.
+      doctor-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
       <<: *service-healthcheck
@@ -132,3 +161,4 @@ volumes:
   mongo-data:
   postgres-data:
   mysql-data:
+  rabbitmq-data:

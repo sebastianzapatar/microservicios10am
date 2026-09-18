@@ -53,6 +53,17 @@ public class DoctorService {
     return mapper.toResponse(findEntity(id));
   }
 
+  /**
+   * Comprueba existencia sin cargar ni exponer la entidad completa.
+   *
+   * <p>Lo usa el consumidor RabbitMQ para responder la validación solicitada por
+   * historias clínicas. La regla sigue viviendo en la capa de servicio y el listener
+   * se limita a traducir mensaje de entrada y salida.
+   */
+  public boolean exists(Long id) {
+    return repository.existsById(id);
+  }
+
   // --- Escritura ------------------------------------------------------------
 
   /**

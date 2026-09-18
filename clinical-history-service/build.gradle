@@ -8,10 +8,7 @@ dependencies {
 
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
-    // Cliente HTTP declarativo: genera la implementación de DoctorClient.
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-
-    // Circuit Breaker para envolver las llamadas Feign y activar el fallback.
-    // Aquí la variante NO reactiva, porque este servicio es Spring MVC.
-    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+    // AMQP permite validar médicos mediante mensajes en RabbitMQ. Se elimina
+    // OpenFeign: este servicio ya no conoce la URL HTTP de doctor-service.
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
 }

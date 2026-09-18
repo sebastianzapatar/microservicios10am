@@ -7,7 +7,8 @@ server:
 spring:
   application:
     # Nombre con el que se registra en Eureka. Es el que usa el gateway en
-    # lb://doctor-service y el que usa OpenFeign desde historias clínicas.
+    # lb://doctor-service. La validación desde historias ya no usa Eureka:
+    # viaja mediante el exchange y la cola de RabbitMQ.
     name: doctor-service
 
   datasource:
@@ -22,6 +23,19 @@ spring:
       # Hibernate crea o ajusta la tabla "doctors" al arrancar. Cómodo para un
       # proyecto de clase; en producción se usarían migraciones (Flyway/Liquibase).
       ddl-auto: update
+
+  rabbitmq:
+    # Conexión AMQP para consumir doctor.validation. No se necesita conocer la
+    # dirección de clinical-history-service: la respuesta usa reply-to.
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hospital}
+    password: ${RABBITMQ_PASSWORD:hospital}
+    listener:
+      simple:
+        # Un mensaje se confirma solo al terminar el método listener. Si ocurre
+        # un fallo inesperado, RabbitMQ puede entregarlo de nuevo.
+        acknowledge-mode: auto
 
 eureka:
   client:

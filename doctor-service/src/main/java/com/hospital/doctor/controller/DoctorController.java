@@ -29,8 +29,8 @@ import com.hospital.doctor.service.DoctorService;
  * <p>Este servicio tiene dos clases de consumidores:
  * <ul>
  *   <li>el usuario final, que entra por el gateway en {@code /api/doctors};</li>
- *   <li>clinical-history-service, que llama a {@code GET /api/doctors/{id}} por
- *       OpenFeign para validar un médico antes de guardar o actualizar una historia.</li>
+ *   <li>clinical-history-service, que envía una solicitud por RabbitMQ para validar
+ *       un médico antes de guardar o actualizar una historia.</li>
  * </ul>
  */
 @RestController

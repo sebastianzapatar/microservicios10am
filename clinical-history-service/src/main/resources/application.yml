@@ -16,19 +16,17 @@ spring:
     # El valor por defecto sirve dentro de Compose; MONGO_URI lo sobreescribe.
     uri: ${MONGO_URI:mongodb://mongo:27017/clinicaldb}
 
-  cloud:
-    openfeign:
-      circuitbreaker:
-        # Envuelve cada llamada Feign en un Circuit Breaker, que es lo que
-        # permite que actúe DoctorClientFallback cuando doctor-service falla.
-        enabled: true
-      client:
-        config:
-          doctor-service:
-            # Un 404 no es un fallo de infraestructura: se devuelve null en vez
-            # de lanzar excepción. Así "el médico no existe" se responde 400,
-            # no 503, y consultar ids inexistentes no abre el circuito.
-            dismiss404: true
+  rabbitmq:
+    # RabbitMQ reemplaza la llamada HTTP de OpenFeign. El host es el nombre DNS
+    # del contenedor en Compose; las variables permiten cambiarlo sin recompilar.
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hospital}
+    password: ${RABBITMQ_PASSWORD:hospital}
+    template:
+      # El patrón RPC espera respuesta, pero nunca de forma indefinida. Si
+      # doctor-service no consume en 3 s, el cliente recibe UNAVAILABLE -> 503.
+      reply-timeout: 3s
 
 eureka:
   client:
