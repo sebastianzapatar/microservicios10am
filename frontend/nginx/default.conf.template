@@ -1,0 +1,55 @@
+# Plantilla procesada por envsubst al arrancar la imagen oficial de nginx:
+# solo se sustituyen variables de entorno definidas (${ARQUITECTURA}); las
+# variables propias de nginx ($request_uri, $1...) quedan intactas.
+#
+# El navegador solo habla con este servidor. nginx reenvía cada ruta al
+# contenedor correspondiente dentro de la red de Compose, así no hace falta CORS.
+
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+
+  # DNS interno de Docker. Resolver en cada petición (proxy_pass con variables)
+  # permite que nginx arranque aunque RabbitMQ o Kafka UI no existan en esta
+  # rama, o aunque el gateway todavía esté levantando.
+  resolver 127.0.0.11 valid=10s ipv6=off;
+
+  # Qué arquitectura muestra el panel: rest | rabbitmq | kafka.
+  location = /config.json {
+    default_type application/json;
+    add_header Cache-Control "no-store";
+    return 200 '{"arquitectura":"${ARQUITECTURA}"}';
+  }
+
+  # API de negocio y actuator del gateway (circuit breakers).
+  location ~ ^/(api|actuator)/ {
+    set $gateway api-gateway:8080;
+    proxy_pass http://$gateway$request_uri;
+  }
+
+  # Registro de Eureka en JSON.
+  location /registry {
+    set $eureka eureka-server:8761;
+    proxy_set_header Accept application/json;
+    proxy_pass http://$eureka/eureka/apps;
+  }
+
+  # API de administración de RabbitMQ (solo lectura: overview y colas).
+  location /broker/rabbitmq/ {
+    set $rabbit rabbitmq:15672;
+    rewrite ^/broker/rabbitmq/(.*)$ /api/$1 break;
+    proxy_set_header Authorization "Basic aG9zcGl0YWw6aG9zcGl0YWw=";  # hospital:hospital
+    proxy_pass http://$rabbit;
+  }
+
+  # API de Kafka UI: particiones y offsets del tópico.
+  location /broker/kafka/ {
+    set $kafkaui kafka-ui:8080;
+    rewrite ^/broker/kafka/(.*)$ /api/$1 break;
+    proxy_pass http://$kafkaui;
+  }
+
+  location / {
+    try_files $uri /index.html;
+  }
+}

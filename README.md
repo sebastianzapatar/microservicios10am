@@ -25,9 +25,21 @@ docker compose up --build --wait
 
 El proyecto Compose se llama `hospital-microservices` (fijado con `name:` en `compose.yaml`, no depende del nombre de la carpeta). Toda la API entra por `http://localhost:8080`; Eureka está en `http://localhost:8762` y RabbitMQ Management en `http://localhost:15672` con usuario y contraseña `hospital`.
 
-`--wait` bloquea hasta que los nueve contenedores estén *healthy*: tres motores de datos, RabbitMQ, Eureka, tres servicios y el gateway. Sin esperar, las primeras llamadas pueden responder `503` mientras todavía se registran los servicios o se conecta el consumidor AMQP.
+`--wait` bloquea hasta que los diez contenedores estén *healthy*: tres motores de datos, RabbitMQ, Eureka, tres servicios, el gateway y el frontend. Sin esperar, las primeras llamadas pueden responder `503` mientras todavía se registran los servicios o se conecta el consumidor AMQP.
 
 Para apagar todo conservando los datos: `docker compose down`. Para borrarlos también: `docker compose down -v`.
+
+## Panel web (frontend)
+
+`http://localhost:3000` sirve un panel en React (Vite + nginx, carpeta `frontend/`) para demostrar la arquitectura en vivo:
+
+- **RabbitMQ:** consumidores y mensajes de la cola `doctor.validation`, solicitudes publicadas por intervalo, la topología exchange → cola → consumidor y el resultado de cada validación request/reply (`FOUND`, `NOT_FOUND` o timeout), leídos de la API de RabbitMQ Management cada 2 s.
+- **Estado de la plataforma:** servicios registrados en Eureka y estado de cada circuit breaker del gateway.
+- **Probar el flujo:** formularios para registrar médicos y pacientes y abrir historias, una *demo rápida* que hace las tres operaciones seguidas y un botón que envía un médico inexistente para ver el `NOT_FOUND` → `400`.
+
+El navegador solo habla con el puerto 3000: nginx reenvía `/api` al gateway y consulta Eureka y RabbitMQ Management dentro de la red de Compose. El mismo frontend existe en las ramas `main` y `kafka`; la variable `ARQUITECTURA` del servicio `frontend` en `compose.yaml` decide qué panel se muestra.
+
+Para desarrollarlo sin Docker (con el resto del stack levantado): `cd frontend && npm install && VITE_ARQUITECTURA=rabbitmq npm run dev`.
 
 ## Endpoints
 

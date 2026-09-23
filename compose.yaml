@@ -1,6 +1,6 @@
 # Plataforma local completa: 3 motores de datos + RabbitMQ + Eureka + 3 servicios
-# + gateway. La API entra por 8080; Eureka y RabbitMQ Management se publican para
-# poder observar el registro y el flujo de mensajes desde el navegador.
+# + gateway + frontend. La API entra por 8080 y el panel web por 3000; Eureka y
+# RabbitMQ Management se publican para observar el registro y los mensajes.
 
 name: hospital-microservices
 
@@ -155,6 +155,19 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       <<: *service-healthcheck
+    restart: unless-stopped
+
+  # ------------------------------------------------------------- frontend --
+  # React servido por nginx. nginx hace de proxy hacia el gateway, Eureka y la
+  # API de RabbitMQ Management, así el navegador solo habla con :3000.
+  frontend:
+    build: { context: ./frontend }
+    ports: ["3000:80"]
+    environment:
+      ARQUITECTURA: rabbitmq   # rest | rabbitmq | kafka: qué panel se muestra
+    depends_on:
+      api-gateway: { condition: service_started }
+      rabbitmq: { condition: service_started }
     restart: unless-stopped
 
 volumes:
