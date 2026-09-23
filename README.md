@@ -23,9 +23,21 @@ docker compose up --build --wait
 
 El proyecto Compose se llama `hospital-microservices` (fijado con `name:` en `compose.yaml`, no depende del nombre de la carpeta). Eureka queda disponible en `http://localhost:8762` y toda la API entra por `http://localhost:8080`. Internamente los servicios siguen usando su puerto estándar `8761`.
 
-`--wait` bloquea hasta que los ocho contenedores estén *healthy*: los tres motores de datos, Eureka, los tres servicios y el gateway. Sin esperar, las primeras llamadas pueden responder `503` mientras el gateway todavía no recibe el registro de Eureka.
+`--wait` bloquea hasta que los nueve contenedores estén *healthy*: los tres motores de datos, Eureka, los tres servicios, el gateway y el frontend. Sin esperar, las primeras llamadas pueden responder `503` mientras el gateway todavía no recibe el registro de Eureka.
 
 Para apagar todo conservando los datos: `docker compose down`. Para borrarlos también: `docker compose down -v`.
+
+## Panel web (frontend)
+
+`http://localhost:3000` sirve un panel en React (Vite + nginx, carpeta `frontend/`) para demostrar la arquitectura en vivo:
+
+- **Llamadas síncronas:** cada historia creada muestra la latencia total de la cadena gateway → historias → médicos (OpenFeign), y los eventos de Resilience4j del gateway (éxitos, errores, transiciones de estado).
+- **Estado de la plataforma:** servicios registrados en Eureka y estado de cada circuit breaker del gateway.
+- **Probar el flujo:** formularios para registrar médicos y pacientes y abrir historias, una *demo rápida* que hace las tres operaciones seguidas y un botón que envía un médico inexistente para ver el `400`.
+
+Con `docker compose stop doctor-service` se ve en el panel cómo `doctorGateway` pasa a *Abierto* y vuelve a *Cerrado* al arrancarlo de nuevo. El navegador solo habla con el puerto 3000: nginx reenvía `/api` y `/actuator` al gateway y consulta Eureka dentro de la red de Compose. El mismo frontend existe en las ramas `rabbit` y `kafka`; la variable `ARQUITECTURA` del servicio `frontend` en `compose.yaml` decide qué panel se muestra.
+
+Para desarrollarlo sin Docker (con el resto del stack levantado): `cd frontend && npm install && VITE_ARQUITECTURA=rest npm run dev`.
 
 ## Endpoints
 

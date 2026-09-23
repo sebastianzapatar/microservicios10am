@@ -1,5 +1,5 @@
-# Plataforma local completa: 3 motores de datos + Eureka + 3 servicios + gateway.
-# Único punto de entrada publicado al host: api-gateway (8080). Eureka se publica
+# Plataforma local completa: 3 motores de datos + Eureka + 3 servicios + gateway
+# + frontend. La API entra por 8080 y el panel web por 3000. Eureka se publica
 # en 8762 solo para poder inspeccionar el registro desde el navegador.
 
 name: hospital-microservices
@@ -126,6 +126,18 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       <<: *service-healthcheck
+    restart: unless-stopped
+
+  # ------------------------------------------------------------- frontend --
+  # React servido por nginx. nginx hace de proxy hacia el gateway y Eureka,
+  # así el navegador solo habla con http://localhost:3000.
+  frontend:
+    build: { context: ./frontend }
+    ports: ["3000:80"]
+    environment:
+      ARQUITECTURA: rest   # rest | rabbitmq | kafka: qué panel se muestra
+    depends_on:
+      api-gateway: { condition: service_started }
     restart: unless-stopped
 
 volumes:
