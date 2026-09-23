@@ -18,7 +18,12 @@ const RESULTADO_RPC = {
 /** Cola, exchange y tráfico de RabbitMQ, leídos de su API de administración. */
 export default function RabbitPanel({ peticiones }) {
   const overview = usePolling(() => get('/broker/rabbitmq/overview', { log: false }), 3000)
-  const cola = usePolling(() => get(`/broker/rabbitmq/queues/%2F/${COLA}`, { log: false }), 2000)
+  // Se pide la lista y se filtra aquí: así la URL no lleva el vhost "/" codificado.
+  const cola = usePolling(async () => {
+    const r = await get('/broker/rabbitmq/queues', { log: false })
+    const q = r.ok && Array.isArray(r.data) ? r.data.find((c) => c.name === COLA) : null
+    return q ? { ...r, data: q } : { ...r, ok: false, status: r.ok ? 404 : r.status }
+  }, 2000)
 
   // Serie de mensajes publicados por intervalo, para ver el tráfico llegar.
   const publicados = cola?.ok ? cola.data?.message_stats?.publish ?? 0 : null
