@@ -46,5 +46,7 @@ export function Notice({ children }) {
 
 export function formatTime(value) {
   if (!value) return '—'
-  return new Date(value).toLocaleTimeString('es-CO', { hour12: false })
+  // Resilience4j serializa ZonedDateTime como "...Z[Etc/UTC]"; Date no acepta la zona.
+  const date = new Date(typeof value === 'string' ? value.replace(/\[.*\]$/, '') : value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleTimeString('es-CO', { hour12: false })
 }

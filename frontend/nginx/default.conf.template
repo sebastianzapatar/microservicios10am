@@ -34,20 +34,19 @@ server {
     proxy_pass http://$eureka/eureka/apps;
   }
 
-  # API de administración de RabbitMQ. Se usa $request_uri (sin decodificar)
-  # para no romper el vhost codificado como %2F.
+  # API de administración de RabbitMQ (solo lectura: overview y colas).
   location /broker/rabbitmq/ {
     set $rabbit rabbitmq:15672;
-    if ($request_uri ~ ^/broker/rabbitmq/(.*)$) { set $rest $1; }
+    rewrite ^/broker/rabbitmq/(.*)$ /api/$1 break;
     proxy_set_header Authorization "Basic aG9zcGl0YWw6aG9zcGl0YWw=";  # hospital:hospital
-    proxy_pass http://$rabbit/api/$rest;
+    proxy_pass http://$rabbit;
   }
 
   # API de Kafka UI: particiones y offsets del tópico.
   location /broker/kafka/ {
     set $kafkaui kafka-ui:8080;
-    if ($request_uri ~ ^/broker/kafka/(.*)$) { set $rest $1; }
-    proxy_pass http://$kafkaui/api/$rest;
+    rewrite ^/broker/kafka/(.*)$ /api/$1 break;
+    proxy_pass http://$kafkaui;
   }
 
   location / {
