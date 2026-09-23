@@ -24,9 +24,21 @@ docker compose up --build --wait
 
 El proyecto Compose se llama `hospital-microservices` (fijado con `name:` en `compose.yaml`, no depende del nombre de la carpeta). Eureka queda disponible en `http://localhost:8762` y toda la API entra por `http://localhost:8080`. Internamente los servicios siguen usando su puerto estándar `8761`.
 
-`--wait` bloquea hasta que los diez contenedores estén *healthy*: Kafka, los tres motores de datos, Eureka, los tres servicios de dominio, auditoría y el gateway. Sin esperar, las primeras llamadas pueden responder `503` mientras el gateway todavía no recibe el registro de Eureka.
+`--wait` bloquea hasta que los doce contenedores estén *healthy*: Kafka, Kafka UI, los tres motores de datos, Eureka, los tres servicios de dominio, auditoría, el gateway y el frontend. Sin esperar, las primeras llamadas pueden responder `503` mientras el gateway todavía no recibe el registro de Eureka.
 
 Para apagar todo conservando los datos: `docker compose down`. Para borrarlos también: `docker compose down -v`.
+
+## Panel web (frontend)
+
+`http://localhost:3000` sirve un panel en React (Vite + nginx, carpeta `frontend/`) para demostrar la arquitectura en vivo:
+
+- **Apache Kafka:** mensajes y particiones del tópico `hospital.events` (leídos de Kafka UI), eventos por tipo y el flujo de eventos que consume `audit-service`, actualizado cada 2 s.
+- **Estado de la plataforma:** servicios registrados en Eureka y estado de cada circuit breaker del gateway.
+- **Probar el flujo:** formularios para registrar médicos y pacientes y abrir historias, una *demo rápida* que hace las tres operaciones seguidas y un botón que envía un médico inexistente para ver el `400`.
+
+Kafka UI queda además en `http://localhost:8090` para inspeccionar tópicos, offsets y mensajes. El navegador solo habla con el puerto 3000: nginx reenvía `/api` al gateway y consulta Eureka y Kafka UI dentro de la red de Compose. El mismo frontend existe en las ramas `main` y `rabbit`; la variable `ARQUITECTURA` del servicio `frontend` en `compose.yaml` decide qué panel se muestra.
+
+Para desarrollarlo sin Docker (con el resto del stack levantado): `cd frontend && npm install && VITE_ARQUITECTURA=kafka npm run dev`.
 
 ## Endpoints
 

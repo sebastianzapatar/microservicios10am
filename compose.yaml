@@ -1,6 +1,6 @@
-# Plataforma local completa: 3 motores de datos + Eureka + 3 servicios + gateway.
-# Único punto de entrada publicado al host: api-gateway (8080). Eureka se publica
-# en 8762 solo para poder inspeccionar el registro desde el navegador.
+# Plataforma local completa: 3 motores de datos + Kafka + Eureka + 4 servicios
+# + gateway + frontend. La API entra por 8080 y el panel web por 3000; Eureka
+# (8762) y Kafka UI (8090) se publican para inspeccionarlos desde el navegador.
 
 name: hospital-microservices
 
@@ -32,6 +32,24 @@ services:
     volumes: [kafka-data:/var/lib/kafka/data]
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  # Interfaz web para ver tópicos, particiones, offsets y mensajes de Kafka.
+  # El frontend también consulta su API para mostrar las particiones.
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:v1.3.0
+    ports: ["8090:8080"]   # http://localhost:8090
+    environment:
+      KAFKA_CLUSTERS_0_NAME: hospital
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      kafka: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -175,6 +193,19 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       <<: *service-healthcheck
+    restart: unless-stopped
+
+  # ------------------------------------------------------------- frontend --
+  # React servido por nginx. nginx hace de proxy hacia el gateway, Eureka y
+  # Kafka UI, así el navegador solo habla con http://localhost:3000.
+  frontend:
+    build: { context: ./frontend }
+    ports: ["3000:80"]
+    environment:
+      ARQUITECTURA: kafka   # rest | rabbitmq | kafka: qué panel se muestra
+    depends_on:
+      api-gateway: { condition: service_started }
+      kafka-ui: { condition: service_started }
     restart: unless-stopped
 
 volumes:
