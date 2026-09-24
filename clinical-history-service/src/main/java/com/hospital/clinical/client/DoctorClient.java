@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
  * la implementación. El {@code name} no es un host, es el nombre registrado en
  * Eureka; Spring Cloud LoadBalancer lo resuelve a una instancia concreta.
  *
- * <p>Dos comportamientos importantes, ambos configurados en {@code application.yml}:
+ * <p>Comportamientos importantes (los valores están en {@code application.yml}):
  * <ul>
+ *   <li>{@code configuration}: {@link DoctorClientConfig} define los reintentos
+ *       (cuántos y cada cuánto) antes de dar la llamada por fallida.</li>
  *   <li>{@code fallback}: si doctor-service no responde, el Circuit Breaker desvía
  *       la llamada a {@link DoctorClientFallback} en vez de propagar el error.</li>
  *   <li>{@code dismiss404: true}: un 404 (el médico no existe) no se trata como
@@ -26,7 +28,10 @@ import org.springframework.web.bind.annotation.PathVariable;
  * <p>Esta interfaz es la <strong>única</strong> puerta de salida hacia doctor-service:
  * ninguna otra clase del servicio conoce sus URLs.
  */
-@FeignClient(name = "doctor-service", fallback = DoctorClientFallback.class)
+@FeignClient(
+    name = "doctor-service",
+    configuration = DoctorClientConfig.class,
+    fallback = DoctorClientFallback.class)
 public interface DoctorClient {
 
   /**

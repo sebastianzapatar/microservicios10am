@@ -29,6 +29,71 @@ spring:
             # de lanzar excepción. Así "el médico no existe" se responde 400,
             # no 503, y consultar ids inexistentes no abre el circuito.
             dismiss404: true
+            # Cuánto se espera a doctor-service en CADA intento (ms).
+            connectTimeout: 1000   # abrir la conexión TCP
+            readTimeout: 2000      # recibir la respuesta una vez conectado
+
+# ===========================================================================
+# RESILIENCIA DE LA LLAMADA A doctor-service
+#
+# Orden en que actúan las piezas en cada petición:
+#
+#   Circuit Breaker ─▶ Time Limiter ─▶ Feign + Retryer ─▶ doctor-service
+#        (3)               (2)              (1)
+#
+#   (1) Feign intenta hasta max-attempts veces, esperando entre intentos.
+#   (2) El Time Limiter corta la llamada completa (con todos sus reintentos).
+#   (3) Si al final falla, el circuito cuenta UN fallo y responde el fallback.
+# ===========================================================================
+
+# --- (1) Reintentos: cuántas veces y cada cuánto -----------------------------
+# Claves propias de este proyecto; las lee DoctorClientConfig.
+doctor-client:
+  retry:
+    max-attempts: 3     # intentos totales, incluido el primero (1 = sin reintentos)
+    period: 500         # ms de espera antes del 2.º intento
+    max-period: 2000    # ms de espera máxima; cada espera es la anterior x 1,5
+    # Resultado: intento ─500ms─▶ intento ─750ms─▶ intento ─▶ fallo
+
+resilience4j:
+  # --- (2) Tiempo máximo de la llamada completa ------------------------------
+  timelimiter:
+    configs:
+      default:
+        # Debe cubrir el peor caso de los reintentos:
+        # 3 x (1s conexión + 2s lectura) + 0,5s + 0,75s ≈ 10,25s.
+        # Si fuera menor (el valor por defecto es 1s), cortaría los reintentos.
+        timeoutDuration: 11s
+
+  # --- (3) Circuit Breaker: cuándo cambia de estado --------------------------
+  #
+  #   CLOSED ──(failureRate >= umbral)──▶ OPEN ──(waitDuration)──▶ HALF_OPEN
+  #     ▲                                   ▲                          │
+  #     └────────(pruebas bien)─────────────┴──────(pruebas mal)───────┘
+  #
+  # "default" aplica a todos los circuitos que crea OpenFeign en este servicio
+  # (uno por método: DoctorClient#findById(Long)).
+  circuitbreaker:
+    configs:
+      default:
+        # CLOSED: el tráfico pasa y se mide.
+        slidingWindowType: COUNT_BASED   # la ventana se cuenta en llamadas, no en segundos
+        slidingWindowSize: 5             # se evalúan las últimas 5 llamadas
+        minimumNumberOfCalls: 5          # no decide nada hasta tener 5 (por defecto 100)
+
+        # CLOSED ─▶ OPEN
+        failureRateThreshold: 50         # abre con >= 50% de fallos en la ventana
+        slowCallDurationThreshold: 5s    # una llamada más lenta que esto cuenta como lenta...
+        slowCallRateThreshold: 100       # ...y abre si el 100% son lentas (desactivado en la práctica)
+
+        # OPEN ─▶ HALF_OPEN
+        waitDurationInOpenState: 10s     # tiempo abierto (todo va directo al fallback)
+        automaticTransitionFromOpenToHalfOpenEnabled: true  # pasa solo, sin esperar tráfico
+
+        # HALF_OPEN ─▶ CLOSED u OPEN
+        permittedNumberOfCallsInHalfOpenState: 2  # llamadas de prueba; si fallan >= 50%, vuelve a OPEN
+
+        registerHealthIndicator: true    # el estado aparece en /actuator/health
 
 eureka:
   client:
@@ -40,4 +105,6 @@ management:
     web:
       exposure:
         # /actuator/health es el que consulta el healthcheck de Docker Compose.
-        include: health,info
+        # circuitbreakers y circuitbreakerevents muestran el estado y los
+        # cambios CLOSED/OPEN/HALF_OPEN de los circuitos de Feign.
+        include: health,info,circuitbreakers,circuitbreakerevents
